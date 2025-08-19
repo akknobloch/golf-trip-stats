@@ -1,0 +1,100 @@
+# Golf Trip Manager - CSV Templates
+# Use these templates to import your data
+
+# 1. PLAYERS TEMPLATE
+# File: players.csv
+# Format: Player Name
+Player Name
+John Smith
+Jane Doe
+Mike Johnson
+Sarah Wilson
+Tom Brown
+Lisa Garcia
+
+# 2. COURSES TEMPLATE  
+# File: courses.csv
+# Format: Course Name,Location,Par
+Course Name,Location,Par
+Pebble Beach Golf Links,Pebble Beach CA,72
+Augusta National Golf Club,Augusta GA,72
+St. Andrews Old Course,St. Andrews Scotland,72
+Whistling Straits,Kohler WI,72
+TPC Sawgrass,Ponte Vedra Beach FL,72
+Pinehurst No. 2,Pinehurst NC,72
+Bethpage Black,Farmingdale NY,72
+Torrey Pines Golf Course,La Jolla CA,72
+
+# 3. TRIPS TEMPLATE
+# File: trips.csv
+# Format: Start Date,End Date,Location,Description,Weather,Notes
+Start Date,End Date,Location,Description,Weather,Notes
+2024-06-15,2024-06-18,Myrtle Beach SC,Annual golf trip,Sunny 75F,Great weather
+2023-07-20,2023-07-23,Pebble Beach CA,West coast trip,Overcast 65F,Beautiful views
+2022-08-10,2022-08-13,Scottsdale AZ,Desert golf,Hot 95F,Early morning rounds
+2021-09-15,2021-09-18,Bandon Dunes OR,Coastal golf,Windy 60F,Challenging conditions
+2020-07-10,2020-07-13,Streamsong FL,Resort golf,Hot 90F,Great resort experience
+
+# 4. TRIP SCORES TEMPLATE (RECOMMENDED)
+# File: trip-scores.csv
+# Format: Trip Year,Golfer Name,Round 1 Score,Round 2 Score,Round 3 Score
+# OR with courses: Trip Year,Golfer Name,Round 1 Score,Round 1 Course,Round 2 Score,Round 2 Course,Round 3 Score,Round 3 Course
+# This is the easiest way to import your data - no need to know IDs!
+
+# Basic Format (Scores Only):
+Trip Year,Golfer Name,Round 1 Score,Round 2 Score,Round 3 Score
+2024,John Smith,85,82,79
+2024,Jane Doe,78,75,77
+2024,Mike Johnson,88,85,83
+2024,Sarah Wilson,92,89,86
+2023,John Smith,87,84,81
+2023,Jane Doe,79,76,78
+2023,Sarah Wilson,90,88,85
+2023,Tom Brown,95,92,89
+2022,John Smith,89,86,83
+2022,Jane Doe,81,78,76
+2022,Mike Johnson,91,88,85
+
+# Extended Format (Scores + Courses):
+Trip Year,Golfer Name,Round 1 Score,Round 1 Course,Round 2 Score,Round 2 Course,Round 3 Score,Round 3 Course
+2024,John Smith,85,Pebble Beach,82,Spyglass Hill,79,Spanish Bay
+2024,Jane Doe,78,Pebble Beach,75,Spyglass Hill,77,Spanish Bay
+2024,Mike Johnson,88,Pebble Beach,85,Spyglass Hill,83,Spanish Bay
+2024,Sarah Wilson,92,Pebble Beach,89,Spyglass Hill,86,Spanish Bay
+2023,John Smith,87,Augusta National,84,Augusta National,81,Augusta National
+2023,Jane Doe,79,Augusta National,76,Augusta National,78,Augusta National
+2023,Sarah Wilson,90,Augusta National,88,Augusta National,85,Augusta National
+2023,Tom Brown,95,Augusta National,92,Augusta National,89,Augusta National
+
+# 5. ROUNDS TEMPLATE (ADVANCED)
+# File: rounds.csv
+# Format: Player ID,Trip ID,Course ID,Score,Date,Year,Notes
+# Note: You'll need to replace Player ID, Trip ID, and Course ID with actual IDs from your imported data
+Player ID,Trip ID,Course ID,Score,Date,Year,Notes
+player1,trip1,course1,85,2024-06-15,2024,Great round
+player2,trip1,course1,78,2024-06-15,2024,Personal best
+player1,trip1,course2,82,2024-06-16,2024,Windy conditions
+player2,trip1,course2,79,2024-06-16,2024,Struggled with putting
+player3,trip1,course1,88,2024-06-15,2024,First time playing here
+player3,trip1,course2,84,2024-06-16,2024,Better second day
+
+# IMPORT INSTRUCTIONS:
+# 
+# RECOMMENDED APPROACH (Easiest):
+# 1. Use the "Trip Scores" template (option 4) - this is the simplest way!
+#    - Just provide the year, golfer names, and scores
+#    - The system will automatically create players, trips, and rounds
+#    - No need to know any IDs beforehand
+#
+# ADVANCED APPROACH (If you need more control):
+# 1. Import Players first
+# 2. Import Courses second  
+# 3. Import Trips third
+# 4. Import Rounds last (after you have the IDs from steps 1-3)
+#
+# For the Rounds template, you'll need to:
+# - Replace "player1" with actual player IDs (e.g., "1234567890")
+# - Replace "trip1" with actual trip IDs (e.g., "1234567891") 
+# - Replace "course1" with actual course IDs (e.g., "1234567892")
+#
+# You can find these IDs in the admin panel after importing the data.

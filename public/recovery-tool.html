@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golf Trip Manager - Data Recovery Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .data-display {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Golf Trip Manager - Data Recovery Tool</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> This tool helps you check and potentially recover data from localStorage. 
+            Use with caution and always backup your data before making changes.
+        </div>
+
+        <div class="section">
+            <h2>📊 Current localStorage Data</h2>
+            <p>Check what data is currently stored in your browser's localStorage:</p>
+            
+            <button class="btn" onclick="checkLocalStorage()">Check localStorage</button>
+            <button class="btn btn-danger" onclick="clearAllData()">Clear All Data (Danger!)</button>
+            
+            <div id="localStorageData" class="data-display"></div>
+        </div>
+
+        <div class="section">
+            <h2>🔄 Restore from Backup</h2>
+            <p>If you have a backup of your data, you can restore it here:</p>
+            
+            <div>
+                <label for="backupData">Paste your backup JSON data:</label><br>
+                <textarea id="backupData" rows="10" cols="80" placeholder='Paste your backup data here...'></textarea>
+            </div>
+            
+            <button class="btn btn-success" onclick="restoreFromBackup()">Restore Data</button>
+        </div>
+
+        <div class="section">
+            <h2>💾 Export Current Data</h2>
+            <p>Create a backup of your current data:</p>
+            
+            <button class="btn" onclick="exportCurrentData()">Export Current Data (JSON)</button>
+            <button class="btn btn-success" onclick="exportTripScores()">Export Trip Scores (CSV)</button>
+            <div id="exportData" class="data-display"></div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Browser Recovery Options</h2>
+            <p>If the data is not in localStorage, try these options:</p>
+            <ul>
+                <li><strong>Browser Back/Forward:</strong> Try using your browser's back button if you haven't navigated away</li>
+                <li><strong>Undo (Ctrl+Z):</strong> Try pressing Ctrl+Z (or Cmd+Z on Mac) if the deletion was recent</li>
+                <li><strong>Browser History:</strong> Check if your browser has any cached versions</li>
+                <li><strong>Other Tabs:</strong> Check if you have the app open in other browser tabs</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function checkLocalStorage() {
+            const data = {
+                players: localStorage.getItem('golfPlayers'),
+                courses: localStorage.getItem('golfCourses'),
+                trips: localStorage.getItem('golfTrips'),
+                rounds: localStorage.getItem('golfRounds')
+            };
+            
+            const display = document.getElementById('localStorageData');
+            display.textContent = JSON.stringify(data, null, 2);
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
+                localStorage.removeItem('golfPlayers');
+                localStorage.removeItem('golfCourses');
+                localStorage.removeItem('golfTrips');
+                localStorage.removeItem('golfRounds');
+                alert('All data cleared!');
+                checkLocalStorage();
+            }
+        }
+
+        function restoreFromBackup() {
+            const backupText = document.getElementById('backupData').value;
+            if (!backupText.trim()) {
+                alert('Please paste backup data first!');
+                return;
+            }
+
+            try {
+                const backupData = JSON.parse(backupText);
+                
+                if (backupData.players) {
+                    localStorage.setItem('golfPlayers', JSON.stringify(backupData.players));
+                }
+                if (backupData.courses) {
+                    localStorage.setItem('golfCourses', JSON.stringify(backupData.courses));
+                }
+                if (backupData.trips) {
+                    localStorage.setItem('golfTrips', JSON.stringify(backupData.trips));
+                }
+                if (backupData.rounds) {
+                    localStorage.setItem('golfRounds', JSON.stringify(backupData.rounds));
+                }
+                
+                alert('Data restored successfully!');
+                checkLocalStorage();
+            } catch (error) {
+                alert('Error parsing backup data: ' + error.message);
+            }
+        }
+
+        function exportCurrentData() {
+            const data = {
+                players: JSON.parse(localStorage.getItem('golfPlayers') || '[]'),
+                courses: JSON.parse(localStorage.getItem('golfCourses') || '[]'),
+                trips: JSON.parse(localStorage.getItem('golfTrips') || '[]'),
+                rounds: JSON.parse(localStorage.getItem('golfRounds') || '[]')
+            };
+            
+            const display = document.getElementById('exportData');
+            display.textContent = JSON.stringify(data, null, 2);
+            
+            // Also create a downloadable file
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `golf-trip-manager-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportTripScores() {
+            const players = JSON.parse(localStorage.getItem('golfPlayers') || '[]');
+            const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]');
+            const trips = JSON.parse(localStorage.getItem('golfTrips') || '[]');
+            const rounds = JSON.parse(localStorage.getItem('golfRounds') || '[]');
+            
+            // Group rounds by trip year and player
+            const tripScoresMap = new Map();
+            
+            rounds.forEach(round => {
+                const trip = trips.find(t => t.id === round.tripId);
+                if (!trip) return;
+                
+                const tripYear = new Date(trip.startDate).getFullYear().toString();
+                const player = players.find(p => p.id === round.playerId);
+                if (!player) return;
+                
+                if (!tripScoresMap.has(tripYear)) {
+                    tripScoresMap.set(tripYear, new Map());
+                }
+                
+                const yearMap = tripScoresMap.get(tripYear);
+                if (!yearMap.has(player.name)) {
+                    yearMap.set(player.name, []);
+                }
+                
+                yearMap.get(player.name).push(round);
+            });
+            
+            // Convert to CSV format
+            const csvRows = [];
+            
+            // Add header - use extended format with courses and dates
+            csvRows.push('Trip Year,Golfer Name,Round 1 Score,Round 1 Course,Round 1 Date,Round 2 Score,Round 2 Course,Round 2 Date,Round 3 Score,Round 3 Course,Round 3 Date');
+            
+            // Sort by trip year (descending) and then by player name
+            const sortedYears = Array.from(tripScoresMap.keys()).sort((a, b) => parseInt(b) - parseInt(a));
+            
+            sortedYears.forEach(tripYear => {
+                const yearMap = tripScoresMap.get(tripYear);
+                const sortedPlayers = Array.from(yearMap.keys()).sort();
+                
+                sortedPlayers.forEach(playerName => {
+                    const playerRounds = yearMap.get(playerName);
+                    
+                    // Sort rounds by date
+                    playerRounds.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                    
+                    // Create multiple rows if player has more than 3 rounds
+                    for (let roundGroup = 0; roundGroup < Math.ceil(playerRounds.length / 3); roundGroup++) {
+                        const row = [tripYear, playerName];
+                        
+                        for (let i = 0; i < 3; i++) {
+                            const roundIndex = roundGroup * 3 + i;
+                            const round = playerRounds[roundIndex];
+                            if (round) {
+                                const course = courses.find(c => c.id === round.courseId);
+                                row.push(
+                                    round.score.toString(),
+                                    course ? course.name : 'Unknown Course',
+                                    round.date
+                                );
+                            } else {
+                                row.push('', '', ''); // Empty values for missing rounds
+                            }
+                        }
+                        
+                        csvRows.push(row.join(','));
+                    }
+                });
+            });
+            
+            const csvContent = csvRows.join('\n');
+            
+            // Calculate total rounds exported for verification
+            let totalRoundsExported = 0;
+            tripScoresMap.forEach(yearMap => {
+                yearMap.forEach(playerRounds => {
+                    totalRoundsExported += playerRounds.length;
+                });
+            });
+            
+            console.log(`Export Summary: ${totalRoundsExported} rounds exported from ${rounds.length} total rounds`);
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `golf-trip-scores-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert(`Trip Scores exported successfully! (${totalRoundsExported} rounds)`);
+        }
+
+        // Auto-check localStorage on page load
+        window.onload = function() {
+            checkLocalStorage();
+        };
+    </script>
+</body>
+</html>
