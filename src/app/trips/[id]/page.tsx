@@ -6,6 +6,11 @@ import Link from 'next/link'
 import { Player, Course, Trip, Round } from '@/lib/types'
 import { formatDate, getDateValue, calculateTripDuration } from '@/lib/utils'
 
+// Required for static export - returns empty array since this is client-side
+export async function generateStaticParams() {
+  return []
+}
+
 interface TripRound {
   round: Round
   player: Player

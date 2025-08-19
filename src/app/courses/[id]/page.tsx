@@ -2,11 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Course, Round, Trip, Player } from '@/lib/types'
-import { calculateCourseStats, formatDate } from '@/lib/utils'
+import { Course, Round, Player, Trip } from '@/lib/types'
+import { calculateCourseStats } from '@/lib/utils'
 import Link from 'next/link'
 
-export default function CourseDetail() {
+// Required for static export - returns empty array since this is client-side
+export async function generateStaticParams() {
+  return []
+}
+
+export default function CourseDetails() {
   const params = useParams()
   const courseId = params.id as string
   

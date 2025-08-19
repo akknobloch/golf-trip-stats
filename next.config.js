@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Standard Next.js configuration for server-side hosting
+  output: 'export',
   trailingSlash: true,
-  
-  // Disable image optimization for better performance
   images: {
     unoptimized: true,
   },

@@ -5,6 +5,11 @@ import { useRouter, useParams } from 'next/navigation'
 import { Round, Trip, Course, Player } from '@/lib/types'
 import Link from 'next/link'
 
+// Required for static export - returns empty array since this is client-side
+export async function generateStaticParams() {
+  return []
+}
+
 export default function EditRound() {
   const router = useRouter()
   const params = useParams()
