@@ -321,8 +321,7 @@ export default function PlayerDetails() {
             <div className="recent-rounds-table">
               <div className="rounds-header">
                 <div className="round-col">Date</div>
-                <div className="round-col">Course</div>
-                <div className="round-col">Trip</div>
+                <div className="round-col">Course & Trip</div>
                 <div className="round-col">Score</div>
                 <div className="round-col">To Par</div>
               </div>
@@ -333,8 +332,10 @@ export default function PlayerDetails() {
                 return (
                   <div key={round.id} className="round-row">
                     <div className="round-col">{new Date(round.date).toLocaleDateString()}</div>
-                    <div className="round-col">{course.name}</div>
-                    <div className="round-col">{new Date(trip.startDate).getFullYear()} {trip.location}</div>
+                    <div className="round-col course-trip-col">
+                      <div className="course-name">{course.name}</div>
+                      <div className="trip-info">{new Date(trip.startDate).getFullYear()} {trip.location}</div>
+                    </div>
                     <div className="round-col">{round.score}</div>
                     <div className={`round-col ${toPar <= 0 ? 'under-par' : 'over-par'}`}>
                       {toParDisplay}

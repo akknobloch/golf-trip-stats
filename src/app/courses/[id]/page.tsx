@@ -105,9 +105,9 @@ export default function CourseDetails() {
                 <i className="fas fa-trophy"></i>
               </div>
               <div className="highlight-content">
-                <h3>Average Score</h3>
-                <div className="score-value">{courseStats.averageScore}</div>
-                <p className="score-player">All players combined</p>
+                <h3>{courseStats.averageScore}</h3>
+                <p>Average Score</p>
+                <small>All players combined</small>
               </div>
             </div>
 
@@ -116,12 +116,12 @@ export default function CourseDetails() {
                 <i className="fas fa-star"></i>
               </div>
               <div className="highlight-content">
-                <h3>Best Score</h3>
-                <div className="score-value">{courseStats.bestScore}</div>
+                <h3>{courseStats.bestScore}</h3>
+                <p>Best Score</p>
                 {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.bestScore) && (
-                  <p className="score-player">
+                  <small>
                     {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.bestScore)?.playerName}
-                  </p>
+                  </small>
                 )}
               </div>
             </div>
@@ -131,12 +131,12 @@ export default function CourseDetails() {
                 <i className="fas fa-exclamation-triangle"></i>
               </div>
               <div className="highlight-content">
-                <h3>Worst Score</h3>
-                <div className="score-value">{courseStats.worstScore}</div>
+                <h3>{courseStats.worstScore}</h3>
+                <p>Worst Score</p>
                 {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.worstScore) && (
-                  <p className="score-player">
+                  <small>
                     {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.worstScore)?.playerName}
-                  </p>
+                  </small>
                 )}
               </div>
             </div>
