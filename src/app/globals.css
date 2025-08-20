@@ -17,6 +17,8 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Header */
@@ -766,9 +768,39 @@ body {
 /* Trip and Course cards */
 .trips-grid, .courses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 1.5rem;
     margin-bottom: 3rem;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 1200px) {
+    .trips-grid, .courses-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.25rem;
+    }
+}
+
+@media (max-width: 1024px) {
+    .trips-grid, .courses-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .trips-grid, .courses-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0 0.5rem;
+    }
+    
+    .trip-card, .course-card {
+        padding: 1rem;
+        margin: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
 }
 
 .trip-card-link, .player-card-link {
@@ -2409,6 +2441,10 @@ body {
 }
 
 @media (max-width: 768px) {
+    .container {
+        padding: 0 10px;
+    }
+    
     .recent-rounds-table::after {
         opacity: 1;
     }
@@ -2521,10 +2557,14 @@ body {
     .courses-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
+        padding: 0 0.5rem;
     }
     
     .course-card {
         padding: 1rem;
+        margin: 0;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     .course-stats {
@@ -2565,10 +2605,23 @@ body {
     
     .course-card {
         padding: 0.75rem;
+        margin: 0;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     .course-header h3 {
         font-size: 1.1rem;
+    }
+    
+    .course-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .course-header-right {
+        align-self: flex-end;
     }
     
     .course-stats {
