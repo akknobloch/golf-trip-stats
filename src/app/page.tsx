@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Player, Stats, Course, Trip, Round } from '@/lib/types'
 import { calculateStats, getAvailableYears, calculatePlayerStats, calculateCourseTimesPlayed } from '@/lib/utils'
-import { getData } from '@/lib/data'
+import { getData } from '../lib/data'
 import Link from 'next/link'
 import TabbedContainer from '@/components/TabbedContainer'
 import ParallaxCard from '@/components/ParallaxCard'
