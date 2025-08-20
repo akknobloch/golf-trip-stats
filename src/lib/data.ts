@@ -1,5 +1,5 @@
 import { Player, Course, Trip, Round } from './types'
-import { staticPlayers, staticCourses, staticTrips, staticRounds } from '@/data/golf-data'
+import { staticPlayers, staticCourses, staticTrips, staticRounds } from '../data/golf-data'
 
 export function getStaticData() {
   return {
