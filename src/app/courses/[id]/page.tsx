@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { Course, Round, Player, Trip } from '@/lib/types'
 import { calculateCourseStats } from '@/lib/utils'
+import { getData } from '../../../lib/data'
 import Link from 'next/link'
 
 
@@ -20,28 +21,15 @@ export default function CourseDetails() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Load data from localStorage
+    // Load data from static source
     const loadData = () => {
       try {
-        const savedCourses = localStorage.getItem('golfCourses')
-        const savedRounds = localStorage.getItem('golfRounds')
-        const savedTrips = localStorage.getItem('golfTrips')
-        const savedPlayers = localStorage.getItem('golfPlayers')
-        
-        if (savedCourses) {
-          const courses = JSON.parse(savedCourses)
-          const foundCourse = courses.find((c: Course) => c.id === courseId)
-          setCourse(foundCourse || null)
-        }
-        if (savedRounds) {
-          setRounds(JSON.parse(savedRounds))
-        }
-        if (savedTrips) {
-          setTrips(JSON.parse(savedTrips))
-        }
-        if (savedPlayers) {
-          setPlayers(JSON.parse(savedPlayers))
-        }
+        const data = getData()
+        const foundCourse = data.courses.find((c: Course) => c.id === courseId)
+        setCourse(foundCourse || null)
+        setRounds(data.rounds)
+        setTrips(data.trips)
+        setPlayers(data.players)
       } catch (error) {
         console.error('Error loading data:', error)
       } finally {

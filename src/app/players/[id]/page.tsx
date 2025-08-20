@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Player, Course, Trip, Round } from '@/lib/types'
 import { calculatePlayerStats } from '@/lib/utils'
+import { getData } from '../../../lib/data'
 
 
 
@@ -50,56 +51,16 @@ export default function PlayerDetails() {
   const [yearStats, setYearStats] = useState<{ [year: number]: { rounds: number, average: number, best: number } }>({})
 
   useEffect(() => {
-    // Load data from localStorage
+    // Load data from static source
     const loadData = () => {
       try {
-        const savedPlayers = localStorage.getItem('golfPlayers')
-        const savedCourses = localStorage.getItem('golfCourses')
-        const savedTrips = localStorage.getItem('golfTrips')
-        const savedRounds = localStorage.getItem('golfRounds')
-        
-        if (savedPlayers) {
-          const playersData = JSON.parse(savedPlayers)
-          if (Array.isArray(playersData)) {
-            const foundPlayer = playersData.find((p: Player) => p.id === playerId)
-            setPlayer(foundPlayer || null)
-            setPlayers(playersData)
-          } else {
-            console.warn('Invalid players data format')
-            setPlayer(null)
-            setPlayers([])
-          }
-        }
-        
-        if (savedCourses) {
-          const courses = JSON.parse(savedCourses)
-          if (Array.isArray(courses)) {
-            setCourses(courses)
-          } else {
-            console.warn('Invalid courses data format')
-            setCourses([])
-          }
-        }
-        
-        if (savedTrips) {
-          const trips = JSON.parse(savedTrips)
-          if (Array.isArray(trips)) {
-            setTrips(trips)
-          } else {
-            console.warn('Invalid trips data format')
-            setTrips([])
-          }
-        }
-        
-        if (savedRounds) {
-          const rounds = JSON.parse(savedRounds)
-          if (Array.isArray(rounds)) {
-            setRounds(rounds)
-          } else {
-            console.warn('Invalid rounds data format')
-            setRounds([])
-          }
-        }
+        const data = getData()
+        const foundPlayer = data.players.find((p: Player) => p.id === playerId)
+        setPlayer(foundPlayer || null)
+        setPlayers(data.players)
+        setCourses(data.courses)
+        setTrips(data.trips)
+        setRounds(data.rounds)
       } catch (error) {
         console.error('Error loading data:', error)
         // Set empty arrays to prevent further errors
