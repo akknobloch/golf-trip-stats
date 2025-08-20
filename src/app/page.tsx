@@ -104,7 +104,14 @@ export default function Home() {
 
   const availableYears = getAvailableYears(rounds)
   const sortedTrips = [...trips].sort((a, b) => new Date(b.startDate).getFullYear() - new Date(a.startDate).getFullYear())
-  const sortedCourses = [...courses].sort((a, b) => (b.lastPlayed || 0) - (a.lastPlayed || 0))
+  const sortedCourses = [...courses].sort((a, b) => {
+    const aTimesPlayed = calculateCourseTimesPlayed(a.id, rounds)
+    const bTimesPlayed = calculateCourseTimesPlayed(b.id, rounds)
+    if (aTimesPlayed !== bTimesPlayed) {
+      return bTimesPlayed - aTimesPlayed // Sort by trips played (descending)
+    }
+    return a.name.localeCompare(b.name) // Then by name alphabetically
+  })
 
   return (
     <div className="container">
@@ -424,7 +431,7 @@ export default function Home() {
               content: sortedCourses.length > 0 ? (
                 <div className="courses-section">
                   <div className="courses-grid">
-                    {sortedCourses.slice(0, 6).map(course => (
+                    {sortedCourses.map(course => (
                       <Link key={course.id} href={`/courses/${course.id}`} className="course-card-link">
                         <ParallaxCard className="course-card" intensity={8} rotationIntensity={2}>
                           <div className="course-header">

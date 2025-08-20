@@ -930,7 +930,7 @@ player1,trip1,course2,82,2024-06-16,2024,Windy conditions`
                   <div className="card-content">
                     <p><strong>Location:</strong> {course.location}</p>
                     <p><strong>Par:</strong> {course.par}</p>
-                    <p><strong>Times Played:</strong> {course.timesPlayed}</p>
+                    <p><strong>Times Played:</strong> {new Set(rounds.filter(round => round.courseId === course.id).map(round => round.tripId)).size}</p>
                     {course.lastPlayed && (
                       <p><strong>Last Played:</strong> {course.lastPlayed}</p>
                     )}

@@ -14,15 +14,35 @@ export function exportCurrentData() {
   }
 }
 
+// Function to update course timesPlayed values based on actual rounds data
+function updateCourseTimesPlayed(courses: any[], rounds: any[]) {
+  return courses.map(course => {
+    const courseRounds = rounds.filter(round => round.courseId === course.id)
+    const uniqueTrips = new Set(courseRounds.map(round => round.tripId))
+    const lastPlayed = courseRounds.length > 0 
+      ? Math.max(...courseRounds.map(round => round.year))
+      : 0
+    
+    return {
+      ...course,
+      timesPlayed: uniqueTrips.size,
+      lastPlayed
+    }
+  })
+}
+
 export function generateStaticDataFile() {
   const data = exportCurrentData()
   if (!data) return ''
+  
+  // Update course timesPlayed values based on actual rounds data
+  const updatedCourses = updateCourseTimesPlayed(data.courses, data.rounds)
   
   return `import { Player, Course, Trip, Round } from '@/lib/types'
 
 export const staticPlayers: Player[] = ${JSON.stringify(data.players, null, 2)}
 
-export const staticCourses: Course[] = ${JSON.stringify(data.courses, null, 2)}
+export const staticCourses: Course[] = ${JSON.stringify(updatedCourses, null, 2)}
 
 export const staticTrips: Trip[] = ${JSON.stringify(data.trips, null, 2)}
 

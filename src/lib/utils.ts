@@ -365,10 +365,12 @@ export function calculateCourseStats(course: Course, rounds: Round[]): CourseSta
   const worstScore = Math.max(...courseRounds.map(round => round.score))
   const lastPlayed = Math.max(...courseRounds.map(round => round.year))
 
+  const uniqueTrips = new Set(courseRounds.map(round => round.tripId))
+  
   return {
     courseId: course.id,
     courseName: course.name,
-    timesPlayed: courseRounds.length,
+    timesPlayed: uniqueTrips.size,
     averageScore: Math.round(averageScore * 10) / 10,
     bestScore,
     bestPlayer: '', // Will be resolved when players data is available
