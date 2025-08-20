@@ -31,6 +31,7 @@ body {
 
 .header-content {
     text-align: center;
+    padding: 0 1rem;
 }
 
 .header h1 {
@@ -1625,7 +1626,13 @@ body {
 /* Responsive design */
 @media (max-width: 768px) {
     .header h1 {
-        font-size: 2rem;
+        font-size: 1.8rem;
+        word-wrap: break-word;
+        hyphens: auto;
+    }
+    
+    .header p {
+        font-size: 1rem;
     }
     
     .controls, .landing-actions {
@@ -1843,6 +1850,9 @@ body {
     font-weight: 600;
     color: #374151;
     border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 20;
 }
 
 .rankings-row {
@@ -1865,11 +1875,11 @@ body {
 
 .rank-col {
     font-weight: 600;
-    font-size: 1.1rem;
+    color: #374151;
 }
 
 .player-col {
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .stat-col {
@@ -1878,12 +1888,26 @@ body {
     color: #059669;
 }
 
+/* Ensure table is responsive on larger screens */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .rankings-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .rankings-header,
+    .rankings-row {
+        min-width: 600px;
+    }
+}
+
 /* Mobile responsive adjustments for Player Rankings */
 @media (max-width: 768px) {
     .rankings-table {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         position: relative;
+        background: white;
     }
     
     .rankings-header,
@@ -1896,9 +1920,11 @@ body {
         position: sticky;
         left: 0;
         background: inherit;
-        z-index: 2;
+        z-index: 10;
         padding-left: 1.5rem;
         padding-right: 1rem;
+        font-weight: 600;
+        color: #374151;
     }
     
     .player-col {
@@ -1906,9 +1932,11 @@ body {
         position: sticky;
         left: 80px; /* Width of rank column */
         background: inherit;
-        z-index: 2;
+        z-index: 10;
         padding-right: 1rem;
         min-width: 120px;
+        font-weight: 600;
+        color: #374151;
     }
     
     .stat-col {
@@ -1916,26 +1944,44 @@ body {
         padding-right: 0.5rem;
     }
     
-    /* Ensure sticky columns have proper background */
+    /* Ensure sticky columns have proper background with subtle border for better separation */
+    .rankings-header {
+        background: #f8fafc !important;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+    
     .rankings-header .rank-col,
     .rankings-header .player-col {
-        background: #f8fafc;
+        background: #f8fafc !important;
+        border-right: 1px solid #e5e7eb;
     }
     
     .rankings-row .rank-col,
     .rankings-row .player-col {
-        background: white;
+        background: white !important;
+        border-right: 1px solid #e5e7eb;
     }
     
     .rankings-row:hover .rank-col,
     .rankings-row:hover .player-col {
-        background: #f8fafc;
+        background: #f8fafc !important;
+        border-right: 1px solid #e5e7eb;
     }
     
     .rankings-row.champion-row .rank-col,
     .rankings-row.champion-row .player-col {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+        border-right: 1px solid #e5e7eb;
     }
+    
+    /* Ensure champion row maintains its background */
+    .rankings-row.champion-row {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+    }
+    
+
     
     /* Course Rounds Table Mobile Styles */
     .course-rounds-table {
@@ -2020,7 +2066,7 @@ body {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: flex-start;
 }
 
 .course-stat {
@@ -2496,6 +2542,15 @@ body {
 
 /* Extra small screens */
 @media (max-width: 480px) {
+    .header h1 {
+        font-size: 1.5rem;
+        line-height: 1.2;
+    }
+    
+    .header p {
+        font-size: 0.9rem;
+    }
+    
     .recent-rounds-table {
         padding: 1rem;
     }
@@ -2525,6 +2580,22 @@ body {
     .course-stat {
         flex: 1;
         min-width: 0;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 320px) {
+    .header h1 {
+        font-size: 1.3rem;
+        line-height: 1.1;
+    }
+    
+    .header p {
+        font-size: 0.85rem;
+    }
+    
+    .header-content {
+        padding: 0 0.5rem;
     }
 }
 

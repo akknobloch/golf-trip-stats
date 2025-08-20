@@ -57,49 +57,77 @@
             // Scale factor
             const scale = size / 32;
             
-            // Golf ball
+            // Create green gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#059669');
+            gradient.addColorStop(1, '#047857');
+            
+            // Draw background circle
             ctx.beginPath();
-            ctx.arc(20 * scale, 12 * scale, 6 * scale, 0, 2 * Math.PI);
-            ctx.fillStyle = '#ffffff';
+            ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+            ctx.fillStyle = gradient;
             ctx.fill();
-            ctx.strokeStyle = '#2c3e50';
-            ctx.lineWidth = 1 * scale;
+            
+            // Trophy icon
+            const centerX = size/2;
+            const centerY = size/2;
+            
+            // Trophy base
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY + 6 * scale, 6 * scale, 2 * scale, 0, 0, 2 * Math.PI);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fill();
+            ctx.strokeStyle = '#d97706';
+            ctx.lineWidth = 0.5 * scale;
             ctx.stroke();
             
-            // Golf ball dimples
-            const dimples = [
-                [18, 10], [22, 10], [20, 8], [18, 14], [22, 14]
-            ];
-            dimples.forEach(([x, y]) => {
-                ctx.beginPath();
-                ctx.arc(x * scale, y * scale, 1 * scale, 0, 2 * Math.PI);
-                ctx.fillStyle = '#e8e8e8';
-                ctx.fill();
-            });
-            
-            // Golf club shaft
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(8 * scale, 8 * scale, 2 * scale, 16 * scale);
-            
-            // Golf club head
+            // Trophy cup
             ctx.beginPath();
-            ctx.ellipse(9 * scale, 24 * scale, 4 * scale, 2 * scale, 0, 0, 2 * Math.PI);
-            ctx.fillStyle = '#2c3e50';
-            ctx.fill();
-            
-            // Flag stick
-            ctx.fillStyle = '#e74c3c';
-            ctx.fillRect(24 * scale, 4 * scale, 1 * scale, 20 * scale);
-            
-            // Flag
-            ctx.beginPath();
-            ctx.moveTo(24 * scale, 4 * scale);
-            ctx.lineTo(28 * scale, 6 * scale);
-            ctx.lineTo(28 * scale, 8 * scale);
-            ctx.lineTo(24 * scale, 6 * scale);
+            ctx.moveTo(centerX - 4 * scale, centerY + 6 * scale);
+            ctx.lineTo(centerX - 4 * scale, centerY - 4 * scale);
+            ctx.quadraticCurveTo(centerX - 4 * scale, centerY - 6 * scale, centerX - 2 * scale, centerY - 6 * scale);
+            ctx.lineTo(centerX + 2 * scale, centerY - 6 * scale);
+            ctx.quadraticCurveTo(centerX + 4 * scale, centerY - 6 * scale, centerX + 4 * scale, centerY - 4 * scale);
+            ctx.lineTo(centerX + 4 * scale, centerY + 6 * scale);
             ctx.closePath();
-            ctx.fillStyle = '#e74c3c';
+            ctx.fillStyle = '#fbbf24';
             ctx.fill();
+            ctx.strokeStyle = '#d97706';
+            ctx.lineWidth = 0.5 * scale;
+            ctx.stroke();
+            
+            // Trophy handles
+            ctx.beginPath();
+            ctx.moveTo(centerX - 4 * scale, centerY - 2 * scale);
+            ctx.quadraticCurveTo(centerX - 6 * scale, centerY - 2 * scale, centerX - 6 * scale, centerY);
+            ctx.quadraticCurveTo(centerX - 6 * scale, centerY + 2 * scale, centerX - 4 * scale, centerY + 2 * scale);
+            ctx.strokeStyle = '#d97706';
+            ctx.lineWidth = 1 * scale;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX + 4 * scale, centerY - 2 * scale);
+            ctx.quadraticCurveTo(centerX + 6 * scale, centerY - 2 * scale, centerX + 6 * scale, centerY);
+            ctx.quadraticCurveTo(centerX + 6 * scale, centerY + 2 * scale, centerX + 4 * scale, centerY + 2 * scale);
+            ctx.strokeStyle = '#d97706';
+            ctx.lineWidth = 1 * scale;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // Trophy top rim
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY - 4 * scale, 4 * scale, 1 * scale, 0, 0, 2 * Math.PI);
+            ctx.fillStyle = '#d97706';
+            ctx.fill();
+            
+            // Trophy shine
+            ctx.beginPath();
+            ctx.ellipse(centerX - 1 * scale, centerY - 3 * scale, 2 * scale, 0.5 * scale, 0, 0, 2 * Math.PI);
+            ctx.fillStyle = '#fef3c7';
+            ctx.globalAlpha = 0.8;
+            ctx.fill();
+            ctx.globalAlpha = 1;
         }
         
         // Draw favicons at different sizes

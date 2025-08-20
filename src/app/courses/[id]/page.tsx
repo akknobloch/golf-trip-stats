@@ -143,6 +143,8 @@ export default function CourseDetails() {
           </div>
         )}
 
+
+
         {/* Trips Played */}
         {courseStats && courseStats.roundsWithPlayers.length > 0 && (
           <div className="trips-section">
