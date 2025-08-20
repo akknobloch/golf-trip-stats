@@ -6,10 +6,7 @@ import Link from 'next/link'
 import { Player, Course, Trip, Round } from '@/lib/types'
 import { calculatePlayerStats } from '@/lib/utils'
 
-// Required for static export - returns empty array since this is client-side
-export async function generateStaticParams() {
-  return []
-}
+
 
 interface PlayerRound {
   round: Round

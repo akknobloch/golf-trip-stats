@@ -71,3 +71,4 @@ public_html/
 private_html/
 
 
+.env*.local

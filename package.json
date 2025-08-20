@@ -7,10 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "export": "next build",
-    "deploy:build": "npm run build",
-    "deploy:clean": "rm -rf .next out",
-    "deploy:full": "npm run deploy:clean && npm run deploy:build"
+    "vercel-build": "next build",
+    "vercel-dev": "next dev"
   },
   "dependencies": {
     "next": "14.0.4",

@@ -22,10 +22,16 @@ export default function AdminLogin() {
     setIsLoading(true)
     setError('')
 
-    if (authenticate(password)) {
-      router.push('/admin')
-    } else {
-      setError('Invalid password')
+    try {
+      const success = await authenticate(password)
+      if (success) {
+        router.push('/admin')
+      } else {
+        setError('Invalid password')
+        setPassword('')
+      }
+    } catch (error) {
+      setError('Authentication failed. Please try again.')
       setPassword('')
     }
     

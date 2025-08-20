@@ -87,9 +87,31 @@ Player data is stored in the browser's local storage, so your data will persist 
 
 ## Deployment
 
-This application is configured for deployment to Siteground hosting with Git. The admin panel is password-protected in production to prevent public access.
+This application can be deployed to Vercel (recommended) or Siteground hosting. The admin panel is password-protected in production to prevent public access.
 
-### Quick Deployment
+### Vercel Deployment (Recommended)
+
+1. **Install Vercel CLI** (optional):
+   ```bash
+   npm install -g vercel
+   ```
+
+2. **Deploy using the script**:
+   ```bash
+   ./deploy-vercel.sh
+   ```
+
+3. **Or deploy manually**:
+   - Push your code to GitHub/GitLab/Bitbucket
+   - Go to [vercel.com](https://vercel.com) and create a new project
+   - Import your repository
+   - Set environment variables in Vercel dashboard:
+     - `ADMIN_PASSWORD=your_secure_password`
+     - `NODE_ENV=production`
+
+For detailed Vercel deployment instructions, see [VERCEL-DEPLOYMENT.md](VERCEL-DEPLOYMENT.md).
+
+### Siteground Deployment
 
 1. **Set up environment variables**:
    ```bash
@@ -104,7 +126,7 @@ This application is configured for deployment to Siteground hosting with Git. Th
 
 3. **Upload to server**: Upload the entire project to your web server and set up a reverse proxy.
 
-For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+For detailed Siteground deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ### Security Features
 

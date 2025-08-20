@@ -5,10 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { Course } from '@/lib/types'
 import Link from 'next/link'
 
-// Required for static export - returns empty array since this is client-side
-export async function generateStaticParams() {
-  return []
-}
+
 
 export default function EditCourse() {
   const router = useRouter()

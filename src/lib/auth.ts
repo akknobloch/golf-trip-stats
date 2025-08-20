@@ -1,6 +1,4 @@
 // Simple authentication utility for admin protection
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'golf2024'
-
 export const isAuthenticated = (): boolean => {
   if (typeof window === 'undefined') return false
   
@@ -14,12 +12,27 @@ export const isAuthenticated = (): boolean => {
   return adminSession === 'true'
 }
 
-export const authenticate = (password: string): boolean => {
-  if (password === ADMIN_PASSWORD) {
-    localStorage.setItem('adminAuthenticated', 'true')
-    return true
+export const authenticate = async (password: string): Promise<boolean> => {
+  try {
+    const response = await fetch('/api/auth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ password }),
+    })
+    
+    const data = await response.json()
+    
+    if (data.success) {
+      localStorage.setItem('adminAuthenticated', 'true')
+      return true
+    }
+    return false
+  } catch (error) {
+    console.error('Authentication error:', error)
+    return false
   }
-  return false
 }
 
 export const logout = (): void => {
