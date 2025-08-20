@@ -10,22 +10,9 @@ export function getStaticData() {
   }
 }
 
-// For admin functionality, you can still use localStorage as a fallback
+// Always return static data for public viewing
 export function getData() {
-  if (typeof window !== 'undefined') {
-    // Check if we have localStorage data (for admin use)
-    const savedPlayers = localStorage.getItem('golfPlayers')
-    if (savedPlayers) {
-      return {
-        players: JSON.parse(savedPlayers),
-        courses: JSON.parse(localStorage.getItem('golfCourses') || '[]'),
-        trips: JSON.parse(localStorage.getItem('golfTrips') || '[]'),
-        rounds: JSON.parse(localStorage.getItem('golfRounds') || '[]')
-      }
-    }
-  }
-  
-  // Return static data for public viewing
+  // Return static data for all users
   return getStaticData()
 }
 
