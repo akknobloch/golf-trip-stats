@@ -1,5 +1,6 @@
 import { Player, Round, Trip, Course } from '@/lib/types'
 import { calculatePlayerAverage, calculatePlayerStats } from '@/lib/utils'
+import ParallaxCard from './ParallaxCard'
 
 interface PlayerCardProps {
   player: Player
@@ -30,7 +31,7 @@ export default function PlayerCard({ player, rounds, trips, courses, onViewDetai
     .slice(0, 3)
 
   return (
-    <div className="player-card" onClick={onViewDetails}>
+    <ParallaxCard className="player-card" onClick={onViewDetails}>
       <div className="player-header">
         <div className="player-name">{player.name}</div>
         <div className="player-actions" onClick={(e) => e.stopPropagation()}>
@@ -123,6 +124,6 @@ export default function PlayerCard({ player, rounds, trips, courses, onViewDetai
           <span className="range-value">{worstScore - bestScore}</span>
         </div>
       </div>
-    </div>
+    </ParallaxCard>
   )
 }

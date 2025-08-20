@@ -1,4 +1,5 @@
 import { Stats } from '@/lib/types'
+import ParallaxCard from './ParallaxCard'
 
 interface StatsGridProps {
   stats: Stats
@@ -7,7 +8,7 @@ interface StatsGridProps {
 export default function StatsGrid({ stats }: StatsGridProps) {
   return (
     <div className="stats-grid">
-      <div className="stat-card">
+      <ParallaxCard className="stat-card" intensity={10} rotationIntensity={3}>
         <div className="stat-icon">
           <i className="fas fa-users"></i>
         </div>
@@ -15,8 +16,8 @@ export default function StatsGrid({ stats }: StatsGridProps) {
           <h3>{stats.totalPlayers}</h3>
           <p>Total Players</p>
         </div>
-      </div>
-      <div className="stat-card">
+      </ParallaxCard>
+      <ParallaxCard className="stat-card" intensity={10} rotationIntensity={3}>
         <div className="stat-icon">
           <i className="fas fa-calendar-alt"></i>
         </div>
@@ -24,8 +25,8 @@ export default function StatsGrid({ stats }: StatsGridProps) {
           <h3>{stats.totalYears}</h3>
           <p>Years Tracked</p>
         </div>
-      </div>
-      <div className="stat-card">
+      </ParallaxCard>
+      <ParallaxCard className="stat-card" intensity={10} rotationIntensity={3}>
         <div className="stat-icon">
           <i className="fas fa-trophy"></i>
         </div>
@@ -33,9 +34,9 @@ export default function StatsGrid({ stats }: StatsGridProps) {
           <h3>{stats.bestAverage}</h3>
           <p>Best Average</p>
         </div>
-      </div>
+      </ParallaxCard>
       {stats.bestScore && (
-        <div className="stat-card">
+        <ParallaxCard className="stat-card" intensity={10} rotationIntensity={3}>
           <div className="stat-icon">
             <i className="fas fa-star"></i>
           </div>
@@ -46,7 +47,7 @@ export default function StatsGrid({ stats }: StatsGridProps) {
               <small>{stats.bestScorePlayer} ({stats.bestScoreYear})</small>
             )}
           </div>
-        </div>
+        </ParallaxCard>
       )}
     </div>
   )

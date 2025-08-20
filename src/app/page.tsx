@@ -6,6 +6,7 @@ import { calculateStats, getAvailableYears, calculatePlayerStats, calculateCours
 import { getData } from '@/lib/data'
 import Link from 'next/link'
 import TabbedContainer from '@/components/TabbedContainer'
+import ParallaxCard from '@/components/ParallaxCard'
 
 export default function Home() {
   const [players, setPlayers] = useState<Player[]>([])
@@ -293,11 +294,11 @@ export default function Home() {
           tabs={[
             {
               id: 'recent-trips',
-              label: 'Recent Trips',
+              label: 'Trips',
               content: sortedTrips.length > 0 ? (
                 <div className="recent-trips-section">
                   <div className="trips-grid">
-                    {sortedTrips.slice(0, 6).map(trip => {
+                    {sortedTrips.map(trip => {
                       const tripRounds = rounds.filter(round => round.tripId === trip.id)
                       const tripPlayers = new Set(tripRounds.map(round => round.playerId))
                       const tripCourses = new Set(tripRounds.map(round => round.courseId))
@@ -306,7 +307,7 @@ export default function Home() {
                       
                       return (
                         <Link key={trip.id} href={`/trips/${trip.id}`} className="trip-card-link">
-                          <div className="trip-card">
+                          <ParallaxCard className="trip-card" intensity={8} rotationIntensity={2}>
                             <div className="trip-header">
                               <h3>{trip.location}</h3>
                               <div className="trip-header-right">
@@ -319,13 +320,21 @@ export default function Home() {
                               </div>
                             </div>
                             <div className="trip-details">
-                              <p><i className="fas fa-golf-ball"></i> {tripRounds.length} rounds</p>
-                              <p><i className="fas fa-users"></i> {tripPlayers.size} players</p>
-                              {trip.championPlayerId && (
-                                <p><i className="fas fa-trophy"></i> Champion: {players.find(p => p.id === trip.championPlayerId)?.name || 'Unknown'}</p>
+                              {tripRounds.length > 0 ? (
+                                <>
+                                  <p><i className="fas fa-golf-ball"></i> {tripRounds.length} rounds</p>
+                                  <p><i className="fas fa-users"></i> {tripPlayers.size} players</p>
+                                  {trip.championPlayerId && (
+                                    <p><i className="fas fa-trophy"></i> Champion: {players.find(p => p.id === trip.championPlayerId)?.name || 'Unknown'}</p>
+                                  )}
+                                </>
+                              ) : (
+                                <div className="trip-empty-state">
+                                  <p><i className="fas fa-info-circle"></i> Rounds not tracked</p>
+                                </div>
                               )}
                             </div>
-                          </div>
+                          </ParallaxCard>
                         </Link>
                       )
                     })}
@@ -339,7 +348,7 @@ export default function Home() {
             },
             {
               id: 'all-players',
-              label: 'All Players',
+              label: 'Players',
               content: players.length > 0 ? (
                 <div className="all-players-section">
                   <div className="players-grid">
@@ -353,50 +362,52 @@ export default function Home() {
                         return a.averageScore - b.averageScore
                       })
                       .map((player, index) => (
-                        <Link key={player.id} href={`/players/${player.id}`} className="player-card">
-                          <div className="player-header">
-                            <div className="player-rank">#{index + 1}</div>
-                            <div className="player-name">{player.name}</div>
-                            <div className="player-actions">
-                              <div className="action-btn" title="View Details">
-                                <i className="fas fa-arrow-right"></i>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="player-stats">
-                            <div className="stat-item">
-                              <span className="stat-value">{player.averageScore}</span>
-                              <span className="stat-label">Average</span>
-                            </div>
-                            <div className="stat-item">
-                              <span className="stat-value">{player.totalTrips}</span>
-                              <span className="stat-label">Trips</span>
-                            </div>
-                            <div className="stat-item">
-                              <span className="stat-value">{player.yearsPlayed}</span>
-                              <span className="stat-label">Years</span>
-                            </div>
-                            <div className="stat-item">
-                              <span className="stat-value">{rounds.filter(r => r.playerId === player.id).length}</span>
-                              <span className="stat-label">Rounds</span>
-                            </div>
-                          </div>
-                          
-                          {/* Best Score Highlight */}
-                          {player.bestScore && (
-                            <div className="player-best-score">
-                              <div className="best-score-header">
-                                <i className="fas fa-star"></i>
-                                <span>Best Round</span>
-                              </div>
-                              <div className="best-score-content">
-                                <div className="best-score-value">{player.bestScore}</div>
-                                <div className="best-score-details">
-                                  <span className="best-score-year">{player.bestScoreYear}</span>
+                        <Link key={player.id} href={`/players/${player.id}`} className="player-card-link">
+                          <ParallaxCard className="player-card" intensity={12} rotationIntensity={4}>
+                            <div className="player-header">
+                              <div className="player-rank">#{index + 1}</div>
+                              <div className="player-name">{player.name}</div>
+                              <div className="player-actions">
+                                <div className="action-btn" title="View Details">
+                                  <i className="fas fa-arrow-right"></i>
                                 </div>
                               </div>
                             </div>
-                          )}
+                            <div className="player-stats">
+                              <div className="stat-item">
+                                <span className="stat-value">{player.averageScore}</span>
+                                <span className="stat-label">Average</span>
+                              </div>
+                              <div className="stat-item">
+                                <span className="stat-value">{player.totalTrips}</span>
+                                <span className="stat-label">Trips</span>
+                              </div>
+                              <div className="stat-item">
+                                <span className="stat-value">{player.yearsPlayed}</span>
+                                <span className="stat-label">Years</span>
+                              </div>
+                              <div className="stat-item">
+                                <span className="stat-value">{rounds.filter(r => r.playerId === player.id).length}</span>
+                                <span className="stat-label">Rounds</span>
+                              </div>
+                            </div>
+                            
+                            {/* Best Score Highlight */}
+                            {player.bestScore && (
+                              <div className="player-best-score">
+                                <div className="best-score-header">
+                                  <i className="fas fa-star"></i>
+                                  <span>Best Round</span>
+                                </div>
+                                <div className="best-score-content">
+                                  <div className="best-score-value">{player.bestScore}</div>
+                                  <div className="best-score-details">
+                                    <span className="best-score-year">{player.bestScoreYear}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </ParallaxCard>
                         </Link>
                       ))}
                   </div>
@@ -415,7 +426,7 @@ export default function Home() {
                   <div className="courses-grid">
                     {sortedCourses.slice(0, 6).map(course => (
                       <Link key={course.id} href={`/courses/${course.id}`} className="course-card-link">
-                        <div className="course-card">
+                        <ParallaxCard className="course-card" intensity={8} rotationIntensity={2}>
                           <div className="course-header">
                             <h3>{course.name}</h3>
                             <div className="course-header-right">
@@ -434,7 +445,7 @@ export default function Home() {
                               <p><i className="fas fa-calendar"></i> Last: {course.lastPlayed}</p>
                             )}
                           </div>
-                        </div>
+                        </ParallaxCard>
                       </Link>
                     ))}
                   </div>
