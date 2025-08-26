@@ -47,7 +47,17 @@ export default function TripDetails() {
       try {
         const data = getData()
         const foundTrip = data.trips.find((t: Trip) => t.id === tripId)
-        setTrip(foundTrip || null)
+        
+        if (!foundTrip) {
+          console.warn(`Trip not found: ${tripId}`)
+          setTrip(null)
+          setPlayers([])
+          setCourses([])
+          setRounds([])
+          return
+        }
+        
+        setTrip(foundTrip)
         setPlayers(data.players)
         setCourses(data.courses)
         setRounds(data.rounds)
@@ -140,6 +150,19 @@ export default function TripDetails() {
     }
   }, [trip, players, courses, rounds, tripId])
 
+  // Calculate attendees and total players
+  const attendeesWithoutScores = trip?.attendees && players.length > 0 && rounds.length > 0
+    ? players.filter(player => {
+        if (!player || !player.id) return false
+        const isAttendee = trip.attendees!.includes(player.id)
+        const hasScores = rounds.some(round => round.tripId === tripId && round.playerId === player.id)
+        return isAttendee && !hasScores
+      })
+    : []
+
+  // Total players on the trip (with scores + attendees without scores)
+  const totalTripPlayers = playerStats.length + attendeesWithoutScores.length
+
   if (!trip) {
     return (
       <div className="container">
@@ -180,29 +203,49 @@ export default function TripDetails() {
       </header>
 
       <main className="main-content">
-        {/* Empty State for No Rounds */}
-        {tripRounds.length === 0 && (
-          <div style={{
-            textAlign: 'center',
-            padding: '4rem 2rem'
-          }}>
-            <h2 style={{
-              fontSize: '2rem',
-              color: '#666',
-              marginBottom: '1rem'
-            }}>🏌️‍♂️ No Rounds Found 🏌️‍♀️</h2>
-            <p style={{
-              fontSize: '1.1rem',
-              color: '#888',
-              marginBottom: '2rem'
-            }}>
-              Rounds not tracked for this trip
-            </p>
-            <Link href="/" className="btn btn-secondary">
-              <i className="fas fa-arrow-left"></i> Back to Dashboard
-            </Link>
-          </div>
-        )}
+                    {/* Empty State for No Rounds */}
+            {tripRounds.length === 0 && attendeesWithoutScores.length === 0 && (
+              <div style={{
+                textAlign: 'center',
+                padding: '4rem 2rem'
+              }}>
+                <h2 style={{
+                  fontSize: '2rem',
+                  color: '#666',
+                  marginBottom: '1rem'
+                }}>🏌️‍♂️ No Rounds Found 🏌️‍♀️</h2>
+                <p style={{
+                  fontSize: '1.1rem',
+                  color: '#888',
+                  marginBottom: '2rem'
+                }}>
+                  Rounds not tracked for this trip
+                </p>
+                <Link href="/" className="btn btn-secondary">
+                  <i className="fas fa-arrow-left"></i> Back to Dashboard
+                </Link>
+              </div>
+            )}
+
+            {/* Attendees Without Scores */}
+            {attendeesWithoutScores.length > 0 && (
+              <div className="attendees-section">
+                <h2>📋 Trip Attendees (No Scores Recorded)</h2>
+                <div className="attendees-grid">
+                  {attendeesWithoutScores.map(player => (
+                    <div key={player.id} className="attendee-card">
+                      <div className="attendee-info">
+                        <h3>{player.name}</h3>
+                        <p className="attendee-note">
+                          <i className="fas fa-info-circle"></i>
+                          Attended but scores not recorded
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
         {/* Content sections - only show when there are rounds */}
         {tripRounds.length > 0 && (
@@ -230,7 +273,7 @@ export default function TripDetails() {
               <div className="overview-grid">
                 <div className="overview-item">
                   <i className="fas fa-users"></i>
-                  <span className="overview-value">{playerStats.length}</span>
+                  <span className="overview-value">{totalTripPlayers}</span>
                   <span className="overview-label">Players</span>
                 </div>
                 <div className="overview-item">

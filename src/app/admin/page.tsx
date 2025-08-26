@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Player, Course, Trip, Round } from '@/lib/types'
 import { calculatePlayerStats } from '@/lib/utils'
-import { combineSlagelRecords, findPotentialDuplicates, mergePlayerRecords } from '@/lib/data-migration'
-import { copyDataToClipboard, downloadDataFile } from '@/lib/export-data'
+import { getStaticData } from '@/lib/data'
 import { requireAuth, logout } from '@/lib/auth'
 import Link from 'next/link'
 import Toast from '@/components/Toast'
+import PlayerEditForm from '@/components/PlayerEditForm'
+import CourseEditForm from '@/components/CourseEditForm'
+import TripEditForm from '@/components/TripEditForm'
+import RoundEditForm from '@/components/RoundEditForm'
 
 export default function Admin() {
   const searchParams = useSearchParams()
@@ -17,7 +20,7 @@ export default function Admin() {
   const [courses, setCourses] = useState<Course[]>([])
   const [trips, setTrips] = useState<Trip[]>([])
   const [rounds, setRounds] = useState<Round[]>([])
-  const [activeTab, setActiveTab] = useState<'players' | 'courses' | 'trips' | 'rounds' | 'data'>('players')
+  const [activeTab, setActiveTab] = useState<'overview' | 'players' | 'courses' | 'trips' | 'rounds' | 'export' | 'editor'>('overview')
   const [toast, setToast] = useState<{
     message: string
     type: 'success' | 'error'
@@ -29,15 +32,22 @@ export default function Admin() {
   })
 
   // Import state
-  const [importType, setImportType] = useState<'players' | 'courses' | 'trips' | 'rounds' | 'trip-scores'>('players')
   const [csvData, setCsvData] = useState('')
-  const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle')
-  const [importMessage, setImportMessage] = useState('')
+  const [importType, setImportType] = useState<'players' | 'courses' | 'trips' | 'rounds' | 'trip-scores'>('trip-scores')
   const [showImportSection, setShowImportSection] = useState(false)
 
-  // Recovery tool state
-  const [backupData, setBackupData] = useState('')
-  const [showRecoverySection, setShowRecoverySection] = useState(false)
+  // Editor state
+  const [editorContent, setEditorContent] = useState('')
+  const [isEditing, setIsEditing] = useState(false)
+  const [editorError, setEditorError] = useState('')
+  const [showEditor, setShowEditor] = useState(false)
+
+  // Inline editing state
+  const [editingPlayer, setEditingPlayer] = useState<string | null>(null)
+  const [editingCourse, setEditingCourse] = useState<string | null>(null)
+  const [editingTrip, setEditingTrip] = useState<string | null>(null)
+  const [editingRound, setEditingRound] = useState<string | null>(null)
+  const [showAddForm, setShowAddForm] = useState<'player' | 'course' | 'trip' | 'round' | null>(null)
 
   useEffect(() => {
     // Check authentication in production
@@ -46,39 +56,30 @@ export default function Admin() {
       return
     }
 
-    // Load data from localStorage
+    // Load static data
     const loadData = () => {
-      try {
-        const savedPlayers = localStorage.getItem('golfPlayers')
-        const savedCourses = localStorage.getItem('golfCourses')
-        const savedTrips = localStorage.getItem('golfTrips')
-        const savedRounds = localStorage.getItem('golfRounds')
-        
-        if (savedPlayers) {
-          setPlayers(JSON.parse(savedPlayers))
-        }
-        if (savedCourses) {
-          setCourses(JSON.parse(savedCourses))
-        }
-        if (savedTrips) {
-          setTrips(JSON.parse(savedTrips))
-        }
-        if (savedRounds) {
-          setRounds(JSON.parse(savedRounds))
-        }
-      } catch (error) {
-        console.error('Error loading data:', error)
-      }
+      const data = getStaticData()
+      setPlayers(data.players)
+      setCourses(data.courses)
+      setTrips(data.trips)
+      setRounds(data.rounds)
     }
     
     loadData()
   }, [router])
 
+  // Load editor content when editor tab is opened
+  useEffect(() => {
+    if (activeTab === 'editor' && !editorContent) {
+      loadEditorContent()
+    }
+  }, [activeTab, editorContent])
+
   useEffect(() => {
     // Handle tab parameter from URL
     const tabParam = searchParams.get('tab')
-    if (tabParam && ['players', 'courses', 'trips', 'rounds', 'data'].includes(tabParam)) {
-      setActiveTab(tabParam as 'players' | 'courses' | 'trips' | 'rounds' | 'data')
+    if (tabParam && ['overview', 'players', 'courses', 'trips', 'rounds', 'export', 'editor'].includes(tabParam)) {
+      setActiveTab(tabParam as 'overview' | 'players' | 'courses' | 'trips' | 'rounds' | 'export' | 'editor')
     }
 
     // Handle toast messages from URL
@@ -93,408 +94,190 @@ export default function Admin() {
     }
   }, [searchParams])
 
-  const saveData = (type: 'players' | 'courses' | 'trips' | 'rounds', data: any[]) => {
-    try {
-      localStorage.setItem(`golf${type.charAt(0).toUpperCase() + type.slice(1)}`, JSON.stringify(data))
-    } catch (error) {
-      console.error(`Error saving ${type}:`, error)
-    }
-  }
-
-  const deletePlayer = (id: string) => {
-    const updatedPlayers = players.filter(player => player.id !== id)
-    setPlayers(updatedPlayers)
-    saveData('players', updatedPlayers)
-  }
-
-  const deleteCourse = (id: string) => {
-    const updatedCourses = courses.filter(course => course.id !== id)
-    setCourses(updatedCourses)
-    saveData('courses', updatedCourses)
-  }
-
-  const deleteTrip = (id: string) => {
-    const updatedTrips = trips.filter(trip => trip.id !== id)
-    setTrips(updatedTrips)
-    saveData('trips', updatedTrips)
-  }
-
-  const deleteRound = (id: string) => {
-    const updatedRounds = rounds.filter(round => round.id !== id)
-    setRounds(updatedRounds)
-    saveData('rounds', updatedRounds)
-  }
-
   const closeToast = () => {
     setToast(prev => ({ ...prev, isVisible: false }))
   }
 
-  // Import functionality
-  const handleImport = () => {
+  const generateTypeScriptContent = () => {
+    return `import { Player, Course, Trip, Round } from '@/lib/types'
+
+// Static data for public deployment
+// This data will be embedded in the application and served statically
+// Update this file when you want to update the public data
+
+export const staticPlayers: Player[] = ${JSON.stringify(players, null, 2)}
+
+export const staticCourses: Course[] = ${JSON.stringify(courses, null, 2)}
+
+export const staticTrips: Trip[] = ${JSON.stringify(trips, null, 2)}
+
+export const staticRounds: Round[] = ${JSON.stringify(rounds, null, 2)}
+`
+  }
+
+  const loadEditorContent = () => {
+    setEditorContent(generateTypeScriptContent())
+    setEditorError('')
+    setIsEditing(false)
+  }
+
+  const validateEditorContent = (content: string): { isValid: boolean; error?: string; data?: any } => {
     try {
-      if (importType === 'players') {
-        // Simple CSV import for players
-        const lines = csvData.trim().split('\n')
-        const players: Player[] = []
-        
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i].trim()
-          if (line) {
-            const playerName = line.replace(/"/g, '')
-            if (playerName && playerName !== 'Player Name') {
-              players.push({
-                id: Date.now().toString() + i,
-                name: playerName,
-                yearsPlayed: 0,
-                averageScore: 0,
-                totalTrips: 0
-              })
-            }
-          }
-        }
-        
-        const existingPlayers = JSON.parse(localStorage.getItem('golfPlayers') || '[]')
-        const updatedPlayers = [...existingPlayers, ...players]
-        localStorage.setItem('golfPlayers', JSON.stringify(updatedPlayers))
-        setPlayers(updatedPlayers)
-        setImportMessage(`Successfully imported ${players.length} players`)
-      } else if (importType === 'courses') {
-        // Simple CSV import for courses
-        const lines = csvData.trim().split('\n')
-        const headers = lines[0].split(',').map(h => h.trim())
-        const courses: Course[] = []
-        
-        for (let i = 1; i < lines.length; i++) {
-          const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''))
-          if (values.length >= 3) {
-            courses.push({
-              id: Date.now().toString() + i,
-              name: values[0],
-              location: values[1],
-              par: parseInt(values[2]) || 72,
-              timesPlayed: 0
-            })
-          }
-        }
-        
-        const existingCourses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-        const updatedCourses = [...existingCourses, ...courses]
-        localStorage.setItem('golfCourses', JSON.stringify(updatedCourses))
-        setCourses(updatedCourses)
-        setImportMessage(`Successfully imported ${courses.length} courses`)
-      } else if (importType === 'trips') {
-        // Simple CSV import for trips
-        const lines = csvData.trim().split('\n')
-        const headers = lines[0].split(',').map(h => h.trim())
-        const trips: Trip[] = []
-        
-        for (let i = 1; i < lines.length; i++) {
-          const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''))
-          if (values.length >= 3) {
-            trips.push({
-              id: Date.now().toString() + i,
-              startDate: values[0],
-              endDate: values[1],
-              location: values[2],
-              description: values[3] || undefined,
-              weather: values[4] || undefined,
-              notes: values[5] || undefined,
-              championPlayerId: values[6] || undefined
-            })
-          }
-        }
-        
-        const existingTrips = JSON.parse(localStorage.getItem('golfTrips') || '[]')
-        const updatedTrips = [...existingTrips, ...trips]
-        localStorage.setItem('golfTrips', JSON.stringify(updatedTrips))
-        setTrips(updatedTrips)
-        setImportMessage(`Successfully imported ${trips.length} trips`)
-      } else if (importType === 'rounds') {
-        // Simple CSV import for rounds
-        const lines = csvData.trim().split('\n')
-        const headers = lines[0].split(',').map(h => h.trim())
-        const rounds: Round[] = []
-        
-        for (let i = 1; i < lines.length; i++) {
-          const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''))
-          if (values.length >= 6) {
-            rounds.push({
-              id: Date.now().toString() + i,
-              playerId: values[0],
-              tripId: values[1],
-              courseId: values[2],
-              score: parseInt(values[3]) || 0,
-              date: values[4],
-              year: parseInt(values[5]) || new Date().getFullYear(),
-              notes: values[6] || undefined
-            })
-          }
-        }
-        
-        const existingRounds = JSON.parse(localStorage.getItem('golfRounds') || '[]')
-        const updatedRounds = [...existingRounds, ...rounds]
-        localStorage.setItem('golfRounds', JSON.stringify(updatedRounds))
-        setRounds(updatedRounds)
-        setImportMessage(`Successfully imported ${rounds.length} rounds`)
-      } else if (importType === 'trip-scores') {
-        // Import trip scores with the new format: Trip Year, Golfer Name, Round 1 Score, Round 2 Score, Round 3 Score
-        // Optional: Round 1 Course, Round 2 Course, Round 3 Course
-        const lines = csvData.trim().split('\n')
-        const headers = lines[0].split(',').map(h => h.trim())
-        
-        // Check if this is the basic format, extended format with courses, or extended format with dates
-        const basicHeaders = ['Trip Year', 'Golfer Name', 'Round 1 Score', 'Round 2 Score', 'Round 3 Score']
-        const extendedHeaders = ['Trip Year', 'Golfer Name', 'Round 1 Score', 'Round 1 Course', 'Round 2 Score', 'Round 2 Course', 'Round 3 Score', 'Round 3 Course']
-        const extendedWithDatesHeaders = ['Trip Year', 'Golfer Name', 'Round 1 Score', 'Round 1 Course', 'Round 1 Date', 'Round 2 Score', 'Round 2 Course', 'Round 2 Date', 'Round 3 Score', 'Round 3 Course', 'Round 3 Date']
-        
-        const isBasicFormat = basicHeaders.every(header => headers.includes(header))
-        const isExtendedFormat = extendedHeaders.every(header => headers.includes(header))
-        const isExtendedWithDatesFormat = extendedWithDatesHeaders.every(header => headers.includes(header))
-        
-        if (!isBasicFormat && !isExtendedFormat && !isExtendedWithDatesFormat) {
-          throw new Error('Invalid CSV format. Expected headers: Trip Year, Golfer Name, Round 1 Score, Round 2 Score, Round 3 Score (or with course names: Round 1 Course, Round 2 Course, Round 3 Course, or with dates: Round 1 Date, Round 2 Date, Round 3 Date)')
-        }
-        
-        const hasCourses = isExtendedFormat || isExtendedWithDatesFormat
-        const hasDates = isExtendedWithDatesFormat
-        
-        console.log('CSV Format Detection:', {
-          headers,
-          isBasicFormat,
-          isExtendedFormat,
-          isExtendedWithDatesFormat,
-          hasCourses,
-          hasDates
-        })
-        
-        const players: Player[] = []
-        const trips: Trip[] = []
-        const courses: Course[] = []
-        const rounds: Round[] = []
-        const existingPlayers = JSON.parse(localStorage.getItem('golfPlayers') || '[]')
-        const existingTrips = JSON.parse(localStorage.getItem('golfTrips') || '[]')
-        const existingCourses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-        const existingRounds = JSON.parse(localStorage.getItem('golfRounds') || '[]')
-        
-        // Track unique players, trips, and courses to avoid duplicates
-        const playerMap = new Map<string, string>() // name -> id
-        const tripMap = new Map<number, string>() // year -> id
-        const courseMap = new Map<string, string>() // name -> id
-        
-        // Initialize player map with existing players
-        existingPlayers.forEach((player: Player) => {
-          playerMap.set(player.name, player.id)
-        })
-        
-        // Initialize trip map with existing trips
-        existingTrips.forEach((trip: Trip) => {
-          const tripYear = new Date(trip.startDate).getFullYear()
-          tripMap.set(tripYear, trip.id)
-        })
-        
-        // Initialize course map with existing courses
-        existingCourses.forEach((course: Course) => {
-          courseMap.set(course.name, course.id)
-        })
-        
-        for (let i = 1; i < lines.length; i++) {
-          const values = parseCSVLine(lines[i])
-          console.log(`Processing line ${i}:`, values)
-          
-          if (values.length >= 5) {
-            const tripYear = parseInt(values[0])
-            const golferName = values[1].replace(/"/g, '')
-            
-            if (isNaN(tripYear) || !golferName) continue
-            
-            // Parse scores, courses, and dates based on format
-            let round1Score, round2Score, round3Score
-            let round1Course, round2Course, round3Course
-            let round1Date, round2Date, round3Date
-            
-            if (hasDates) {
-              // Extended format with courses and dates
-              round1Score = parseInt(values[2])
-              round1Course = values[3].replace(/"/g, '')
-              round1Date = values[4].replace(/"/g, '')
-              round2Score = parseInt(values[5])
-              round2Course = values[6].replace(/"/g, '')
-              round2Date = values[7].replace(/"/g, '')
-              round3Score = parseInt(values[8])
-              round3Course = values[9].replace(/"/g, '')
-              round3Date = values[10].replace(/"/g, '')
-            } else if (hasCourses) {
-              // Extended format with courses only
-              round1Score = parseInt(values[2])
-              round1Course = values[3].replace(/"/g, '')
-              round2Score = parseInt(values[4])
-              round2Course = values[5].replace(/"/g, '')
-              round3Score = parseInt(values[6])
-              round3Course = values[7].replace(/"/g, '')
-              // Generate default dates with proper formatting
-              round1Date = `${tripYear}-06-01`
-              round2Date = `${tripYear}-06-02`
-              round3Date = `${tripYear}-06-03`
-            } else {
-              // Basic format without courses
-              round1Score = parseInt(values[2])
-              round2Score = parseInt(values[3])
-              round3Score = parseInt(values[4])
-              round1Course = `Course ${tripYear}-1`
-              round2Course = `Course ${tripYear}-2`
-              round3Course = `Course ${tripYear}-3`
-              // Generate default dates with proper formatting
-              round1Date = `${tripYear}-06-01`
-              round2Date = `${tripYear}-06-02`
-              round3Date = `${tripYear}-06-03`
-            }
-            
-            // Create or get player
-            let playerId = playerMap.get(golferName)
-            if (!playerId) {
-              playerId = Date.now().toString() + i + 'p'
-              playerMap.set(golferName, playerId)
-              players.push({
-                id: playerId,
-                name: golferName,
-                yearsPlayed: 0,
-                averageScore: 0,
-                totalTrips: 0
-              })
-            }
-            
-            // Create or get trip
-            let tripId = tripMap.get(tripYear)
-            if (!tripId) {
-              tripId = Date.now().toString() + i + 't'
-              tripMap.set(tripYear, tripId)
-              trips.push({
-                id: tripId,
-                startDate: `${tripYear}-06-01`,
-                endDate: `${tripYear}-06-03`,
-                location: `Trip ${tripYear}`,
-                description: `Imported trip from ${tripYear}`
-              })
-            }
-            
-            // Create or get courses for each round
-            const courseNames = [round1Course, round2Course, round3Course]
-            const courseIds: string[] = []
-            
-            courseNames.forEach((courseName, courseIndex) => {
-              let courseId = courseMap.get(courseName)
-              if (!courseId) {
-                courseId = Date.now().toString() + i + 'c' + courseIndex
-                courseMap.set(courseName, courseId)
-                courses.push({
-                  id: courseId,
-                  name: courseName,
-                  location: hasCourses ? 'Imported Location' : `Trip ${tripYear} Location`,
-                  par: 72, // Default par
-                  timesPlayed: 0
-                })
-              }
-              courseIds.push(courseId)
-            })
-            
-            // Create rounds for each valid score
-            const scores = [round1Score, round2Score, round3Score]
-            const dates = [round1Date, round2Date, round3Date]
-            scores.forEach((score, roundIndex) => {
-              if (!isNaN(score) && score > 0) {
-                // Validate and format the date
-                let roundDate = dates[roundIndex]
-                if (roundDate && roundDate.trim()) {
-                  // Ensure the date is in YYYY-MM-DD format
-                  if (!/^\d{4}-\d{2}-\d{2}$/.test(roundDate)) {
-                    // If the date format is invalid, use the default
-                    roundDate = `${tripYear}-06-${String(roundIndex + 1).padStart(2, '0')}`
-                    console.log(`Invalid date format for round ${roundIndex + 1}, using default: ${roundDate}`)
-                  }
-                } else {
-                  // If no date provided, use the default
-                  roundDate = `${tripYear}-06-${String(roundIndex + 1).padStart(2, '0')}`
-                  console.log(`No date provided for round ${roundIndex + 1}, using default: ${roundDate}`)
-                }
-                
-                console.log(`Processing round ${roundIndex + 1}: score=${score}, date=${roundDate}, course=${courseIds[roundIndex]}`)
-                
-                rounds.push({
-                  id: Date.now().toString() + i + roundIndex,
-                  playerId,
-                  tripId,
-                  courseId: courseIds[roundIndex],
-                  score,
-                  date: roundDate,
-                  year: tripYear,
-                  notes: `Round ${roundIndex + 1}`
-                })
-              }
-            })
-          }
-        }
-        
-        // Save all data
-        if (players.length > 0) {
-          const updatedPlayers = [...existingPlayers, ...players]
-          localStorage.setItem('golfPlayers', JSON.stringify(updatedPlayers))
-          setPlayers(updatedPlayers)
-        }
-        
-        if (trips.length > 0) {
-          const updatedTrips = [...existingTrips, ...trips]
-          localStorage.setItem('golfTrips', JSON.stringify(updatedTrips))
-          setTrips(updatedTrips)
-        }
-        
-        if (courses.length > 0) {
-          const updatedCourses = [...existingCourses, ...courses]
-          localStorage.setItem('golfCourses', JSON.stringify(updatedCourses))
-          setCourses(updatedCourses)
-        }
-        
-        if (rounds.length > 0) {
-          const updatedRounds = [...existingRounds, ...rounds]
-          localStorage.setItem('golfRounds', JSON.stringify(updatedRounds))
-          setRounds(updatedRounds)
-        }
-        
-        setImportMessage(`Successfully imported ${players.length} new players, ${trips.length} new trips, ${courses.length} new courses, and ${rounds.length} rounds`)
-      }
+      // Remove the import statement and export declarations to get just the data
+      const dataSection = content.replace(/import.*?from.*?;?\s*/g, '')
+        .replace(/export const staticPlayers: Player\[\] = /, '')
+        .replace(/export const staticCourses: Course\[\] = /, '')
+        .replace(/export const staticTrips: Trip\[\] = /, '')
+        .replace(/export const staticRounds: Round\[\] = /, '')
+        .replace(/\/\/.*$/gm, '') // Remove comments
+        .trim()
+
+      // Try to parse the data
+      const dataMatch = dataSection.match(/(\[[\s\S]*?\])\s*(\[[\s\S]*?\])\s*(\[[\s\S]*?\])\s*(\[[\s\S]*?\])\s*$/)
       
-      setImportStatus('success')
-      setCsvData('')
-    } catch (error: unknown) {
-      setImportStatus('error')
-      setImportMessage(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      if (!dataMatch) {
+        return { isValid: false, error: 'Could not parse data structure. Please ensure the file has the correct format.' }
+      }
+
+      const [, playersStr, coursesStr, tripsStr, roundsStr] = dataMatch
+      
+      const players = JSON.parse(playersStr)
+      const courses = JSON.parse(coursesStr)
+      const trips = JSON.parse(tripsStr)
+      const rounds = JSON.parse(roundsStr)
+
+      // Basic validation
+      if (!Array.isArray(players) || !Array.isArray(courses) || !Array.isArray(trips) || !Array.isArray(rounds)) {
+        return { isValid: false, error: 'All data must be arrays.' }
+      }
+
+      return { isValid: true, data: { players, courses, trips, rounds } }
+    } catch (error) {
+      return { isValid: false, error: `Parse error: ${error instanceof Error ? error.message : 'Unknown error'}` }
     }
   }
 
-  // Helper function to parse CSV line with quoted values
-  const parseCSVLine = (line: string): string[] => {
-    const values: string[] = []
-    let current = ''
-    let inQuotes = false
+  const saveEditorContent = async () => {
+    const validation = validateEditorContent(editorContent)
     
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i]
-      
-      if (char === '"') {
-        inQuotes = !inQuotes
-      } else if (char === ',' && !inQuotes) {
-        values.push(current.trim())
-        current = ''
-      } else {
-        current += char
-      }
+    if (!validation.isValid) {
+      setEditorError(validation.error || 'Invalid content')
+      return
     }
-    
-    values.push(current.trim())
-    return values
+
+    try {
+      const response = await fetch('/api/admin/save-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: editorContent,
+          data: validation.data
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      if (result.success) {
+        setToast({
+          message: 'Data saved successfully! The application will reload to reflect changes.',
+          type: 'success',
+          isVisible: true
+        })
+        setIsEditing(false)
+        setEditorError('')
+        
+        // Reload the data
+        const data = getStaticData()
+        setPlayers(data.players)
+        setCourses(data.courses)
+        setTrips(data.trips)
+        setRounds(data.rounds)
+      } else {
+        throw new Error(result.error || 'Failed to save data')
+      }
+    } catch (error) {
+      setEditorError(`Save error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const exportStaticData = () => {
+    try {
+      const data = {
+        players,
+        courses,
+        trips,
+        rounds,
+        exportDate: new Date().toISOString(),
+        version: '1.0'
+      }
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `golf-trip-manager-static-data-${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      
+      setToast({
+        message: 'Static data exported successfully!',
+        type: 'success',
+        isVisible: true
+      })
+    } catch (error: unknown) {
+      console.error('Error exporting data:', error)
+      setToast({
+        message: 'Error exporting data: ' + (error instanceof Error ? error.message : 'Unknown error'),
+        type: 'error',
+        isVisible: true
+      })
+    }
+  }
+
+  const exportTypeScriptFile = () => {
+    try {
+      const tsContent = generateTypeScriptContent()
+      
+      const blob = new Blob([tsContent], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'golf-data.ts'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      
+      setToast({
+        message: 'TypeScript file exported! Replace src/data/golf-data.ts with this file.',
+        type: 'success',
+        isVisible: true
+      })
+    } catch (error: unknown) {
+      console.error('Error exporting TypeScript file:', error)
+      setToast({
+        message: 'Error exporting TypeScript file: ' + (error instanceof Error ? error.message : 'Unknown error'),
+        type: 'error',
+        isVisible: true
+      })
+    }
   }
 
   const getTemplate = () => {
     switch (importType) {
+      case 'trip-scores':
+        return `Trip Year,Golfer Name,Round 1 Score,Round 1 Course,Round 1 Date,Round 2 Score,Round 2 Course,Round 2 Date,Round 3 Score,Round 3 Course,Round 3 Date
+2024,John Smith,85,Pebble Beach,2024-06-15,82,Spyglass Hill,2024-06-16,79,Spanish Bay,2024-06-17
+2024,Jane Doe,78,Pebble Beach,2024-06-15,75,Spyglass Hill,2024-06-16,77,Spanish Bay,2024-06-17
+2024,Mike Johnson,88,Pebble Beach,2024-06-15,85,Spyglass Hill,2024-06-16,83,Spanish Bay,2024-06-17`
       case 'players':
         return `Player Name
 John Smith
@@ -505,26 +288,15 @@ Sarah Wilson`
         return `Course Name,Location,Par
 Pebble Beach Golf Links,Pebble Beach CA,72
 Augusta National Golf Club,Augusta GA,72
-St. Andrews Old Course,St. Andrews Scotland,72
-Whistling Straits,Kohler WI,72`
+St. Andrews Old Course,St. Andrews Scotland,72`
       case 'trips':
         return `Start Date,End Date,Location,Description,Weather,Notes
 2024-06-15,2024-06-18,Myrtle Beach SC,Annual golf trip,Sunny 75F,Great weather
-2023-07-20,2023-07-23,Pebble Beach CA,West coast trip,Overcast 65F,Beautiful views
-2022-08-10,2022-08-13,Scottsdale AZ,Desert golf,Hot 95F,Early morning rounds`
+2023-07-20,2023-07-23,Pebble Beach CA,West coast trip,Overcast 65F,Beautiful views`
       case 'rounds':
         return `Player ID,Trip ID,Course ID,Score,Date,Year,Notes
 player1,trip1,course1,85,2024-06-15,2024,Great round
-player2,trip1,course1,78,2024-06-15,2024,Personal best
-player1,trip1,course2,82,2024-06-16,2024,Windy conditions`
-      case 'trip-scores':
-        return `Trip Year,Golfer Name,Round 1 Score,Round 1 Course,Round 1 Date,Round 2 Score,Round 2 Course,Round 2 Date,Round 3 Score,Round 3 Course,Round 3 Date
-2024,John Smith,85,Pebble Beach,2024-06-15,82,Spyglass Hill,2024-06-16,79,Spanish Bay,2024-06-17
-2024,Jane Doe,78,Pebble Beach,2024-06-15,75,Spyglass Hill,2024-06-16,77,Spanish Bay,2024-06-17
-2024,Mike Johnson,88,Pebble Beach,2024-06-15,85,Spyglass Hill,2024-06-16,83,Spanish Bay,2024-06-17
-2023,John Smith,87,Augusta National,2023-04-08,84,Augusta National,2023-04-09,81,Augusta National,2023-04-10
-2023,Jane Doe,79,Augusta National,2023-04-08,76,Augusta National,2023-04-09,78,Augusta National,2023-04-10
-2023,Sarah Wilson,90,Augusta National,2023-04-08,88,Augusta National,2023-04-09,85,Augusta National,2023-04-10`
+player2,trip1,course1,78,2024-06-15,2024,Personal best`
       default:
         return ''
     }
@@ -541,260 +313,251 @@ player1,trip1,course2,82,2024-06-16,2024,Windy conditions`
     window.URL.revokeObjectURL(url)
   }
 
-  // Recovery tool functionality
-  const restoreFromBackup = () => {
+  const handleImport = () => {
     try {
-      if (!backupData.trim()) {
-        setToast({
-          message: 'Please paste backup data first!',
-          type: 'error',
-          isVisible: true
-        })
-        return
-      }
-
-      const backupDataParsed = JSON.parse(backupData)
-      
-      if (backupDataParsed.players) {
-        localStorage.setItem('golfPlayers', JSON.stringify(backupDataParsed.players))
-        setPlayers(backupDataParsed.players)
-      }
-      if (backupDataParsed.courses) {
-        localStorage.setItem('golfCourses', JSON.stringify(backupDataParsed.courses))
-        setCourses(backupDataParsed.courses)
-      }
-      if (backupDataParsed.trips) {
-        localStorage.setItem('golfTrips', JSON.stringify(backupDataParsed.trips))
-        setTrips(backupDataParsed.trips)
-      }
-      if (backupDataParsed.rounds) {
-        localStorage.setItem('golfRounds', JSON.stringify(backupDataParsed.rounds))
-        setRounds(backupDataParsed.rounds)
-      }
-      
+      // This is a simplified import that just shows the data structure
+      // In a real implementation, you would process the CSV and update the static data
       setToast({
-        message: 'Data restored successfully!',
+        message: 'Import functionality would process CSV and update static data file. For now, use the export feature to get the current data structure.',
         type: 'success',
         isVisible: true
       })
-      setBackupData('')
+      setCsvData('')
     } catch (error: unknown) {
       setToast({
-        message: `Error parsing backup data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         type: 'error',
         isVisible: true
       })
     }
   }
 
-  const clearAllData = () => {
-    if (confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
-      localStorage.removeItem('golfPlayers')
-      localStorage.removeItem('golfCourses')
-      localStorage.removeItem('golfTrips')
-      localStorage.removeItem('golfRounds')
-      setPlayers([])
-      setCourses([])
-      setTrips([])
-      setRounds([])
+  // Inline editing functions
+  const saveAllData = async (newData: { players: Player[], courses: Course[], trips: Trip[], rounds: Round[] }) => {
+    try {
+      const content = `import { Player, Course, Trip, Round } from '@/lib/types'
+
+// Static data for public deployment
+// This data will be embedded in the application and served statically
+// Update this file when you want to update the public data
+
+export const staticPlayers: Player[] = ${JSON.stringify(newData.players, null, 2)}
+
+export const staticCourses: Course[] = ${JSON.stringify(newData.courses, null, 2)}
+
+export const staticTrips: Trip[] = ${JSON.stringify(newData.trips, null, 2)}
+
+export const staticRounds: Round[] = ${JSON.stringify(newData.rounds, null, 2)}
+`
+
+      const response = await fetch('/api/admin/save-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content,
+          data: newData
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      if (result.success) {
+        setToast({
+          message: 'Data saved successfully!',
+          type: 'success',
+          isVisible: true
+        })
+        
+        // Update local state
+        setPlayers(newData.players)
+        setCourses(newData.courses)
+        setTrips(newData.trips)
+        setRounds(newData.rounds)
+        
+        // Clear editing states
+        setEditingPlayer(null)
+        setEditingCourse(null)
+        setEditingTrip(null)
+        setEditingRound(null)
+        setShowAddForm(null)
+      } else {
+        throw new Error(result.error || 'Failed to save data')
+      }
+    } catch (error) {
       setToast({
-        message: 'All data cleared!',
-        type: 'success',
+        message: `Save error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        type: 'error',
         isVisible: true
       })
     }
   }
 
-  const exportBackup = () => {
-    try {
-      const backupData = {
+  const addPlayer = (playerData: Omit<Player, 'id'>) => {
+    const newPlayer: Player = {
+      ...playerData,
+      id: Date.now().toString()
+    }
+    const newData = {
+      players: [...players, newPlayer],
+      courses,
+      trips,
+      rounds
+    }
+    saveAllData(newData)
+  }
+
+  const updatePlayer = (id: string, playerData: Partial<Player>) => {
+    const newPlayers = players.map(player => 
+      player.id === id ? { ...player, ...playerData } : player
+    )
+    const newData = {
+      players: newPlayers,
+      courses,
+      trips,
+      rounds
+    }
+    saveAllData(newData)
+  }
+
+  const deletePlayer = (id: string) => {
+    if (confirm('Are you sure you want to delete this player? This will also delete all their rounds.')) {
+      const newPlayers = players.filter(player => player.id !== id)
+      const newRounds = rounds.filter(round => round.playerId !== id)
+      const newData = {
+        players: newPlayers,
+        courses,
+        trips,
+        rounds: newRounds
+      }
+      saveAllData(newData)
+    }
+  }
+
+  const addCourse = (courseData: Omit<Course, 'id'>) => {
+    const newCourse: Course = {
+      ...courseData,
+      id: Date.now().toString()
+    }
+    const newData = {
+      players,
+      courses: [...courses, newCourse],
+      trips,
+      rounds
+    }
+    saveAllData(newData)
+  }
+
+  const updateCourse = (id: string, courseData: Partial<Course>) => {
+    const newCourses = courses.map(course => 
+      course.id === id ? { ...course, ...courseData } : course
+    )
+    const newData = {
+      players,
+      courses: newCourses,
+      trips,
+      rounds
+    }
+    saveAllData(newData)
+  }
+
+  const deleteCourse = (id: string) => {
+    if (confirm('Are you sure you want to delete this course? This will also delete all rounds played on this course.')) {
+      const newCourses = courses.filter(course => course.id !== id)
+      const newRounds = rounds.filter(round => round.courseId !== id)
+      const newData = {
+        players,
+        courses: newCourses,
+        trips,
+        rounds: newRounds
+      }
+      saveAllData(newData)
+    }
+  }
+
+  const addTrip = (tripData: Omit<Trip, 'id'>) => {
+    const newTrip: Trip = {
+      ...tripData,
+      id: Date.now().toString()
+    }
+    const newData = {
+      players,
+      courses,
+      trips: [...trips, newTrip],
+      rounds
+    }
+    saveAllData(newData)
+  }
+
+  const updateTrip = (id: string, tripData: Partial<Trip>) => {
+    const newTrips = trips.map(trip => 
+      trip.id === id ? { ...trip, ...tripData } : trip
+    )
+    const newData = {
+      players,
+      courses,
+      trips: newTrips,
+      rounds
+    }
+    saveAllData(newData)
+  }
+
+  const deleteTrip = (id: string) => {
+    if (confirm('Are you sure you want to delete this trip? This will also delete all rounds from this trip.')) {
+      const newTrips = trips.filter(trip => trip.id !== id)
+      const newRounds = rounds.filter(round => round.tripId !== id)
+      const newData = {
+        players,
+        courses,
+        trips: newTrips,
+        rounds: newRounds
+      }
+      saveAllData(newData)
+    }
+  }
+
+  const addRound = (roundData: Omit<Round, 'id'>) => {
+    const newRound: Round = {
+      ...roundData,
+      id: Date.now().toString()
+    }
+    const newData = {
+      players,
+      courses,
+      trips,
+      rounds: [...rounds, newRound]
+    }
+    saveAllData(newData)
+  }
+
+  const updateRound = (id: string, roundData: Partial<Round>) => {
+    const newRounds = rounds.map(round => 
+      round.id === id ? { ...round, ...roundData } : round
+    )
+    const newData = {
+      players,
+      courses,
+      trips,
+      rounds: newRounds
+    }
+    saveAllData(newData)
+  }
+
+  const deleteRound = (id: string) => {
+    if (confirm('Are you sure you want to delete this round?')) {
+      const newRounds = rounds.filter(round => round.id !== id)
+      const newData = {
         players,
         courses,
         trips,
-        rounds,
-        exportDate: new Date().toISOString(),
-        version: '1.0'
+        rounds: newRounds
       }
-      
-      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `golf-trip-manager-backup-${new Date().toISOString().split('T')[0]}.json`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      
-      setToast({
-        message: 'Backup exported successfully!',
-        type: 'success',
-        isVisible: true
-      })
-    } catch (error: unknown) {
-      console.error('Error exporting backup:', error)
-      setToast({
-        message: 'Error exporting backup: ' + (error instanceof Error ? error.message : 'Unknown error'),
-        type: 'error',
-        isVisible: true
-      })
-    }
-  }
-
-  const exportTripScores = () => {
-    try {
-      // Group rounds by trip year and player
-      const tripScoresMap = new Map<string, Map<string, Round[]>>()
-      
-      let skippedRounds = 0
-      let skippedNoTrip = 0
-      let skippedNoPlayer = 0
-      
-      rounds.forEach(round => {
-        const trip = trips.find(t => t.id === round.tripId)
-        if (!trip) {
-          skippedNoTrip++
-          return
-        }
-        
-        const tripYear = new Date(trip.startDate).getFullYear().toString()
-        const player = players.find(p => p.id === round.playerId)
-        if (!player) {
-          skippedNoPlayer++
-          return
-        }
-        
-        if (!tripScoresMap.has(tripYear)) {
-          tripScoresMap.set(tripYear, new Map())
-        }
-        
-        const yearMap = tripScoresMap.get(tripYear)!
-        if (!yearMap.has(player.name)) {
-          yearMap.set(player.name, [])
-        }
-        
-        yearMap.get(player.name)!.push(round)
-      })
-      
-      if (skippedNoTrip > 0 || skippedNoPlayer > 0) {
-        console.log(`Export Debug: Skipped ${skippedNoTrip} rounds with no trip, ${skippedNoPlayer} rounds with no player`)
-      }
-      
-      // Convert to CSV format
-      const csvRows: string[] = []
-      
-      // Add header - use extended format with courses and dates
-      csvRows.push('Trip Year,Golfer Name,Round 1 Score,Round 1 Course,Round 1 Date,Round 2 Score,Round 2 Course,Round 2 Date,Round 3 Score,Round 3 Course,Round 3 Date')
-      
-      // Sort by trip year (descending) and then by player name
-      const sortedYears = Array.from(tripScoresMap.keys()).sort((a, b) => parseInt(b) - parseInt(a))
-      
-      sortedYears.forEach(tripYear => {
-        const yearMap = tripScoresMap.get(tripYear)!
-        const sortedPlayers = Array.from(yearMap.keys()).sort()
-        
-        sortedPlayers.forEach(playerName => {
-          const playerRounds = yearMap.get(playerName)!
-          
-          // Sort rounds by date
-          playerRounds.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-          
-          // Create multiple rows if player has more than 3 rounds
-          for (let roundGroup = 0; roundGroup < Math.ceil(playerRounds.length / 3); roundGroup++) {
-            const row: string[] = [tripYear, playerName]
-            
-            for (let i = 0; i < 3; i++) {
-              const roundIndex = roundGroup * 3 + i
-              const round = playerRounds[roundIndex]
-              if (round) {
-                const course = courses.find(c => c.id === round.courseId)
-                row.push(
-                  round.score.toString(),
-                  course?.name || 'Unknown Course',
-                  round.date
-                )
-              } else {
-                row.push('', '', '') // Empty values for missing rounds
-              }
-            }
-            
-            csvRows.push(row.join(','))
-          }
-        })
-      })
-      
-      const csvContent = csvRows.join('\n')
-      
-      // Calculate total rounds exported for verification
-      let totalRoundsExported = 0
-      tripScoresMap.forEach(yearMap => {
-        yearMap.forEach(playerRounds => {
-          totalRoundsExported += playerRounds.length
-        })
-      })
-      
-      console.log(`Export Summary: ${totalRoundsExported} rounds exported from ${rounds.length} total rounds`)
-      
-      const blob = new Blob([csvContent], { type: 'text/csv' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `golf-trip-scores-${new Date().toISOString().split('T')[0]}.csv`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      
-      setToast({
-        message: `Trip Scores exported successfully! (${totalRoundsExported} rounds)`,
-        type: 'success',
-        isVisible: true
-      })
-    } catch (error: unknown) {
-      console.error('Error exporting trip scores:', error)
-      setToast({
-        message: 'Error exporting trip scores: ' + (error instanceof Error ? error.message : 'Unknown error'),
-        type: 'error',
-        isVisible: true
-      })
-    }
-  }
-
-  const handleSlagelMerge = () => {
-    const result = combineSlagelRecords()
-    if (result.success) {
-      setToast({
-        message: result.message,
-        type: 'success',
-        isVisible: true
-      })
-      // Reload data
-      const loadData = () => {
-        try {
-          const savedPlayers = localStorage.getItem('golfPlayers')
-          const savedRounds = localStorage.getItem('golfRounds')
-          const savedTrips = localStorage.getItem('golfTrips')
-          
-          if (savedPlayers) {
-            setPlayers(JSON.parse(savedPlayers))
-          }
-          if (savedRounds) {
-            setRounds(JSON.parse(savedRounds))
-          }
-          if (savedTrips) {
-            setTrips(JSON.parse(savedTrips))
-          }
-        } catch (error) {
-          console.error('Error reloading data:', error)
-        }
-      }
-      loadData()
-    } else {
-      setToast({
-        message: result.message,
-        type: 'error',
-        isVisible: true
-      })
+      saveAllData(newData)
     }
   }
 
@@ -809,7 +572,7 @@ player1,trip1,course2,82,2024-06-16,2024,Windy conditions`
       <header className="header">
         <div className="header-content">
           <h1><i className="fas fa-cog"></i> Admin Panel</h1>
-          <p>Manage players, courses, and trips</p>
+          <p>Manage static data for public deployment</p>
           <div className="admin-links">
             <Link href="/" className="btn btn-secondary">
               <i className="fas fa-home"></i> Home
@@ -824,6 +587,12 @@ player1,trip1,course2,82,2024-06-16,2024,Windy conditions`
       <main className="main-content">
         {/* Tab Navigation */}
         <div className="admin-tabs">
+          <button 
+            className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            <i className="fas fa-chart-pie"></i> Overview
+          </button>
           <button 
             className={`tab-btn ${activeTab === 'players' ? 'active' : ''}`}
             onClick={() => setActiveTab('players')}
@@ -849,55 +618,147 @@ player1,trip1,course2,82,2024-06-16,2024,Windy conditions`
             <i className="fas fa-golf-ball"></i> Rounds ({rounds.length})
           </button>
           <button 
-            className={`tab-btn ${activeTab === 'data' ? 'active' : ''}`}
-            onClick={() => setActiveTab('data')}
+            className={`tab-btn ${activeTab === 'export' ? 'active' : ''}`}
+            onClick={() => setActiveTab('export')}
           >
-            <i className="fas fa-database"></i> Data Management
+            <i className="fas fa-download"></i> Export/Import
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'editor' ? 'active' : ''}`}
+            onClick={() => setActiveTab('editor')}
+          >
+            <i className="fas fa-edit"></i> Direct Editor
           </button>
         </div>
+
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <div className="admin-section">
+            <div className="section-header">
+              <h2>Data Overview</h2>
+            </div>
+            
+            <div className="overview-grid">
+              <div className="overview-card">
+                <h3><i className="fas fa-users"></i> Players</h3>
+                <div className="overview-stats">
+                  <p><strong>Total:</strong> {players.length}</p>
+                  <p><strong>Active:</strong> {players.filter(p => rounds.some(r => r.playerId === p.id)).length}</p>
+                </div>
+              </div>
+              
+              <div className="overview-card">
+                <h3><i className="fas fa-flag"></i> Courses</h3>
+                <div className="overview-stats">
+                  <p><strong>Total:</strong> {courses.length}</p>
+                  <p><strong>Played:</strong> {courses.filter(c => rounds.some(r => r.courseId === c.id)).length}</p>
+                </div>
+              </div>
+              
+              <div className="overview-card">
+                <h3><i className="fas fa-map-marker-alt"></i> Trips</h3>
+                <div className="overview-stats">
+                  <p><strong>Total:</strong> {trips.length}</p>
+                  <p><strong>Years:</strong> {new Set(trips.map(t => new Date(t.startDate).getFullYear())).size}</p>
+                </div>
+              </div>
+              
+              <div className="overview-card">
+                <h3><i className="fas fa-golf-ball"></i> Rounds</h3>
+                <div className="overview-stats">
+                  <p><strong>Total:</strong> {rounds.length}</p>
+                  <p><strong>Average Score:</strong> {Math.round(rounds.reduce((sum, r) => sum + r.score, 0) / rounds.length)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="info-box">
+              <h3>📋 How to Update Data</h3>
+              <p>This admin panel shows the current static data from <code>src/data/golf-data.ts</code>. To update the data:</p>
+              <ol>
+                <li>Go to the <strong>Direct Editor</strong> tab to edit the file directly</li>
+                <li>Or use the <strong>Export/Import</strong> tab to download, edit, and re-upload</li>
+                <li>Make your changes to the data</li>
+                <li>Save the changes (they will be applied immediately)</li>
+                <li>Redeploy your application to see the changes live</li>
+              </ol>
+              <p><strong>Note:</strong> Changes are saved to the file immediately but require a redeployment to take effect in production.</p>
+            </div>
+          </div>
+        )}
 
         {/* Players Tab */}
         {activeTab === 'players' && (
           <div className="admin-section">
             <div className="section-header">
               <h2>Players</h2>
-              <Link href="/admin/players/add" className="btn btn-primary">
+              <button 
+                onClick={() => setShowAddForm('player')}
+                className="btn btn-primary"
+              >
                 <i className="fas fa-plus"></i> Add Player
-              </Link>
+              </button>
             </div>
             <div className="admin-grid">
-              {players.map(player => (
-                <div key={player.id} className="admin-card">
-                  <div className="card-header">
-                    <h3>{player.name}</h3>
-                    <div className="card-actions">
-                      <Link href={`/admin/players/${player.id}`} className="btn btn-small">
-                        <i className="fas fa-edit"></i>
-                      </Link>
-                      <button 
-                        onClick={() => deletePlayer(player.id)}
-                        className="btn btn-small btn-danger"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
+              {players.map(player => {
+                const playerStats = calculatePlayerStats(player, rounds, trips)
+                return (
+                  <div key={player.id} className="admin-card">
+                    <div className="card-header">
+                      <h3>{player.name}</h3>
+                      <div className="card-actions">
+                        <button 
+                          onClick={() => setEditingPlayer(player.id)}
+                          className="btn btn-edit"
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        <button 
+                          onClick={() => deletePlayer(player.id)}
+                          className="btn btn-danger"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="card-content">
+                      <p><strong>Years:</strong> {playerStats.yearsPlayed}</p>
+                      <p><strong>Average:</strong> {playerStats.averageScore}</p>
+                      <p><strong>Total Rounds:</strong> {rounds.filter(r => r.playerId === player.id).length}</p>
+                      <p><strong>Best Score:</strong> {playerStats.bestScore || 'N/A'}</p>
                     </div>
                   </div>
-                  <div className="card-content">
-                    <p><strong>Years:</strong> {calculatePlayerStats(player, rounds).yearsPlayed}</p>
-                    <p><strong>Average:</strong> {calculatePlayerStats(player, rounds).averageScore}</p>
-                    <p><strong>Total Rounds:</strong> {rounds.filter(r => r.playerId === player.id).length}</p>
-                    <p><strong>Best Score:</strong> {calculatePlayerStats(player, rounds).bestScore || 'N/A'}</p>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
               {players.length === 0 && (
                 <div className="empty-state">
                   <i className="fas fa-users"></i>
                   <h3>No Players</h3>
-                  <p>Add your first player to get started!</p>
+                  <p>No players found in static data.</p>
                 </div>
               )}
             </div>
+
+            {/* Add Player Form */}
+            {showAddForm === 'player' && (
+              <PlayerEditForm
+                onSave={addPlayer}
+                onCancel={() => setShowAddForm(null)}
+                isEditing={false}
+              />
+            )}
+
+            {/* Edit Player Form */}
+            {editingPlayer && (
+              <PlayerEditForm
+                player={players.find(p => p.id === editingPlayer)}
+                onSave={(playerData) => {
+                  updatePlayer(editingPlayer, playerData)
+                }}
+                onCancel={() => setEditingPlayer(null)}
+                isEditing={true}
+              />
+            )}
           </div>
         )}
 
@@ -906,45 +767,74 @@ player1,trip1,course2,82,2024-06-16,2024,Windy conditions`
           <div className="admin-section">
             <div className="section-header">
               <h2>Courses</h2>
-              <Link href="/admin/courses/add" className="btn btn-primary">
+              <button 
+                onClick={() => setShowAddForm('course')}
+                className="btn btn-primary"
+              >
                 <i className="fas fa-plus"></i> Add Course
-              </Link>
+              </button>
             </div>
             <div className="admin-grid">
-              {courses.map(course => (
-                <div key={course.id} className="admin-card">
-                  <div className="card-header">
-                    <h3>{course.name}</h3>
-                    <div className="card-actions">
-                      <Link href={`/admin/courses/${course.id}`} className="btn btn-small">
-                        <i className="fas fa-edit"></i>
-                      </Link>
-                      <button 
-                        onClick={() => deleteCourse(course.id)}
-                        className="btn btn-small btn-danger"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
+              {courses.map(course => {
+                const courseRounds = rounds.filter(round => round.courseId === course.id)
+                const uniqueTrips = new Set(courseRounds.map(round => round.tripId))
+                return (
+                  <div key={course.id} className="admin-card">
+                    <div className="card-header">
+                      <h3>{course.name}</h3>
+                      <div className="card-actions">
+                        <button 
+                          onClick={() => setEditingCourse(course.id)}
+                          className="btn btn-edit"
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        <button 
+                          onClick={() => deleteCourse(course.id)}
+                          className="btn btn-danger"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="card-content">
+                      <p><strong>Location:</strong> {course.location}</p>
+                      <p><strong>Par:</strong> {course.par}</p>
+                      <p><strong>Times Played:</strong> {uniqueTrips.size}</p>
+                      <p><strong>Total Rounds:</strong> {courseRounds.length}</p>
                     </div>
                   </div>
-                  <div className="card-content">
-                    <p><strong>Location:</strong> {course.location}</p>
-                    <p><strong>Par:</strong> {course.par}</p>
-                    <p><strong>Times Played:</strong> {new Set(rounds.filter(round => round.courseId === course.id).map(round => round.tripId)).size}</p>
-                    {course.lastPlayed && (
-                      <p><strong>Last Played:</strong> {course.lastPlayed}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
               {courses.length === 0 && (
                 <div className="empty-state">
                   <i className="fas fa-flag"></i>
                   <h3>No Courses</h3>
-                  <p>Add your first course to get started!</p>
+                  <p>No courses found in static data.</p>
                 </div>
               )}
             </div>
+
+            {/* Add Course Form */}
+            {showAddForm === 'course' && (
+              <CourseEditForm
+                onSave={addCourse}
+                onCancel={() => setShowAddForm(null)}
+                isEditing={false}
+              />
+            )}
+
+            {/* Edit Course Form */}
+            {editingCourse && (
+              <CourseEditForm
+                course={courses.find(c => c.id === editingCourse)}
+                onSave={(courseData) => {
+                  updateCourse(editingCourse, courseData)
+                }}
+                onCancel={() => setEditingCourse(null)}
+                isEditing={true}
+              />
+            )}
           </div>
         )}
 
@@ -953,45 +843,57 @@ player1,trip1,course2,82,2024-06-16,2024,Windy conditions`
           <div className="admin-section">
             <div className="section-header">
               <h2>Trips</h2>
-              <div className="section-actions">
-                <Link href="/admin/trips/add" className="btn btn-primary">
-                  <i className="fas fa-plus"></i> Add Trip
-                </Link>
-                <Link href="/admin/rounds/add" className="btn btn-secondary">
-                  <i className="fas fa-golf-ball"></i> Add Round
-                </Link>
-              </div>
+              <button 
+                onClick={() => setShowAddForm('trip')}
+                className="btn btn-primary"
+              >
+                <i className="fas fa-plus"></i> Add Trip
+              </button>
             </div>
             <div className="admin-grid">
               {trips.map(trip => {
                 const tripRounds = rounds.filter(round => round.tripId === trip.id)
-                const tripPlayers = new Set(tripRounds.map(round => round.playerId))
+                const tripPlayersWithScores = new Set(tripRounds.map(round => round.playerId))
                 const tripCourses = new Set(tripRounds.map(round => round.courseId))
                 const tripYear = new Date(trip.startDate).getFullYear()
                 const tripName = `${tripYear} ${trip.location}`
+                
+                // Include attendees who don't have scores
+                const attendeesWithoutScores = trip.attendees 
+                  ? players.filter(player => 
+                      trip.attendees!.includes(player.id) && 
+                      !tripRounds.some(round => round.playerId === player.id)
+                    )
+                  : []
+                
+                // Total players = players with scores + attendees without scores
+                const totalTripPlayers = tripPlayersWithScores.size + attendeesWithoutScores.length
                 
                 return (
                   <div key={trip.id} className="admin-card">
                     <div className="card-header">
                       <h3>{tripName}</h3>
                       <div className="card-actions">
-                        <Link href={`/admin/trips/${trip.id}`} className="btn btn-small">
+                        <button 
+                          onClick={() => setEditingTrip(trip.id)}
+                          className="btn btn-edit"
+                        >
                           <i className="fas fa-edit"></i>
-                        </Link>
+                        </button>
                         <button 
                           onClick={() => deleteTrip(trip.id)}
-                          className="btn btn-small btn-danger"
+                          className="btn btn-danger"
                         >
                           <i className="fas fa-trash"></i>
                         </button>
                       </div>
                     </div>
                     <div className="card-content">
-                      <p><strong>Year:</strong> {new Date(trip.startDate).getFullYear()}</p>
+                      <p><strong>Year:</strong> {tripYear}</p>
                       <p><strong>Dates:</strong> {trip.startDate} to {trip.endDate}</p>
                       <p><strong>Location:</strong> {trip.location}</p>
                       <p><strong>Rounds:</strong> {tripRounds.length}</p>
-                      <p><strong>Players:</strong> {tripPlayers.size}</p>
+                      <p><strong>Players:</strong> {totalTripPlayers}</p>
                       <p><strong>Courses:</strong> {tripCourses.size}</p>
                       {trip.championPlayerId && (
                         <p><strong>Champion:</strong> {players.find(p => p.id === trip.championPlayerId)?.name || 'Unknown'}</p>
@@ -1004,10 +906,33 @@ player1,trip1,course2,82,2024-06-16,2024,Windy conditions`
                 <div className="empty-state">
                   <i className="fas fa-map-marker-alt"></i>
                   <h3>No Trips</h3>
-                  <p>Add your first trip to get started!</p>
+                  <p>No trips found in static data.</p>
                 </div>
               )}
             </div>
+
+            {/* Add Trip Form */}
+            {showAddForm === 'trip' && (
+              <TripEditForm
+                players={players}
+                onSave={addTrip}
+                onCancel={() => setShowAddForm(null)}
+                isEditing={false}
+              />
+            )}
+
+            {/* Edit Trip Form */}
+            {editingTrip && (
+              <TripEditForm
+                trip={trips.find(t => t.id === editingTrip)}
+                players={players}
+                onSave={(tripData: Omit<Trip, 'id'>) => {
+                  updateTrip(editingTrip, tripData)
+                }}
+                onCancel={() => setEditingTrip(null)}
+                isEditing={true}
+              />
+            )}
           </div>
         )}
 
@@ -1016,9 +941,12 @@ player1,trip1,course2,82,2024-06-16,2024,Windy conditions`
           <div className="admin-section">
             <div className="section-header">
               <h2>Rounds</h2>
-              <Link href="/admin/rounds/add" className="btn btn-primary">
+              <button 
+                onClick={() => setShowAddForm('round')}
+                className="btn btn-primary"
+              >
                 <i className="fas fa-plus"></i> Add Round
-              </Link>
+              </button>
             </div>
             <div className="admin-grid">
               {rounds.map(round => {
@@ -1031,12 +959,15 @@ player1,trip1,course2,82,2024-06-16,2024,Windy conditions`
                     <div className="card-header">
                       <h3>{player?.name} - {course?.name}</h3>
                       <div className="card-actions">
-                        <Link href={`/admin/rounds/${round.id}`} className="btn btn-small">
+                        <button 
+                          onClick={() => setEditingRound(round.id)}
+                          className="btn btn-edit"
+                        >
                           <i className="fas fa-edit"></i>
-                        </Link>
+                        </button>
                         <button 
                           onClick={() => deleteRound(round.id)}
-                          className="btn btn-small btn-danger"
+                          className="btn btn-danger"
                         >
                           <i className="fas fa-trash"></i>
                         </button>
@@ -1058,283 +989,184 @@ player1,trip1,course2,82,2024-06-16,2024,Windy conditions`
                 <div className="empty-state">
                   <i className="fas fa-golf-ball"></i>
                   <h3>No Rounds</h3>
-                  <p>Add your first round to get started!</p>
+                  <p>No rounds found in static data.</p>
                 </div>
               )}
+            </div>
+
+            {/* Add Round Form */}
+            {showAddForm === 'round' && (
+              <RoundEditForm
+                players={players}
+                courses={courses}
+                trips={trips}
+                onSave={addRound}
+                onCancel={() => setShowAddForm(null)}
+                isEditing={false}
+              />
+            )}
+
+            {/* Edit Round Form */}
+            {editingRound && (
+              <RoundEditForm
+                round={rounds.find(r => r.id === editingRound)}
+                players={players}
+                courses={courses}
+                trips={trips}
+                onSave={(roundData) => {
+                  updateRound(editingRound, roundData)
+                }}
+                onCancel={() => setEditingRound(null)}
+                isEditing={true}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Export/Import Tab */}
+        {activeTab === 'export' && (
+          <div className="admin-section">
+            <div className="section-header">
+              <h2>Export & Import Data</h2>
+            </div>
+            
+            <div className="export-section">
+              <h3>Export Current Data</h3>
+              <p>Export the current static data for backup or modification.</p>
+              
+              <div className="export-buttons">
+                <button 
+                  onClick={exportStaticData}
+                  className="btn btn-primary"
+                >
+                  <i className="fas fa-download"></i> Export as JSON
+                </button>
+                <button 
+                  onClick={exportTypeScriptFile}
+                  className="btn btn-success"
+                >
+                  <i className="fas fa-file-code"></i> Export as TypeScript File
+                </button>
+              </div>
+              
+              <div className="info-box">
+                <h4>📋 Instructions</h4>
+                <ol>
+                  <li><strong>JSON Export:</strong> Download as JSON for backup or data analysis</li>
+                  <li><strong>TypeScript Export:</strong> Download as TypeScript file to replace <code>src/data/golf-data.ts</code></li>
+                  <li>Make your changes to the exported file</li>
+                  <li>Replace the content of <code>src/data/golf-data.ts</code> with your updated data</li>
+                  <li>Redeploy your application to see the changes</li>
+                </ol>
+              </div>
+            </div>
+
+            <div className="import-section">
+              <h3>Import Data (Coming Soon)</h3>
+              <p>Import CSV data to update the static data file.</p>
+              
+              <div className="info-box">
+                <h4>📋 CSV Import</h4>
+                <p>This feature will allow you to import CSV data and automatically generate the TypeScript file for <code>src/data/golf-data.ts</code>.</p>
+                <p><strong>Supported formats:</strong></p>
+                <ul>
+                  <li>Trip Scores (recommended) - Import scores with player names, courses, and dates</li>
+                  <li>Players - Simple list of player names</li>
+                  <li>Courses - Course information with location and par</li>
+                  <li>Trips - Trip details with dates and locations</li>
+                  <li>Rounds - Individual round data</li>
+                </ul>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Data Management Tab */}
-        {activeTab === 'data' && (
+        {/* Direct Editor Tab */}
+        {activeTab === 'editor' && (
           <div className="admin-section">
             <div className="section-header">
-              <h2>Data Management</h2>
-            </div>
-            
-            <div className="data-management-section">
-              <h3>Backup & Export</h3>
-              <p>Create a backup of all your current data for safekeeping.</p>
-              
-              <div className="backup-section">
-                <h4>Export Options</h4>
-                <div className="export-buttons">
-                  <button 
-                    onClick={exportBackup}
-                    className="btn btn-primary"
-                  >
-                    <i className="fas fa-download"></i> Export All Data as Backup (JSON)
-                  </button>
-                  <button 
-                    onClick={exportTripScores}
-                    className="btn btn-secondary"
-                  >
-                    <i className="fas fa-file-csv"></i> Export Trip Scores (CSV)
-                  </button>
-                </div>
-                <p className="help-text">
-                  <strong>Backup (JSON):</strong> Complete data backup for recovery purposes.<br/>
-                  <strong>Trip Scores (CSV):</strong> Formatted for easy import/reimport in "Trip Scores" format.
-                </p>
-              </div>
-
-              <h3>Static Data Export</h3>
-              <p>Export your data for public deployment. This creates a static data file that can be embedded in your application.</p>
-              
-              <div className="static-export-section">
-                <h4>Export for Public Deployment</h4>
-                <div className="export-buttons">
-                  <button 
-                    onClick={downloadDataFile}
-                    className="btn btn-success"
-                  >
-                    <i className="fas fa-file-code"></i> Download Static Data File
-                  </button>
-                  <button 
-                    onClick={() => {
-                      if (copyDataToClipboard()) {
-                        setToast({
-                          message: 'Static data copied to clipboard!',
-                          type: 'success',
-                          isVisible: true
-                        })
-                      } else {
-                        setToast({
-                          message: 'Failed to copy to clipboard',
-                          type: 'error',
-                          isVisible: true
-                        })
-                      }
-                    }}
-                    className="btn btn-secondary"
-                  >
-                    <i className="fas fa-copy"></i> Copy to Clipboard
-                  </button>
-                </div>
-                <p className="help-text">
-                  <strong>Static Data File:</strong> Creates a TypeScript file with your data that can be embedded in the application for public deployment.<br/>
-                  <strong>Instructions:</strong> Download the file, replace the content in <code>src/data/golf-data.ts</code>, and redeploy your application.
-                </p>
-              </div>
-
-              <h3>Import Data</h3>
-              <p>Import CSV data to add new players, courses, trips, or rounds to your system.</p>
-              
-              <div className="import-section">
+              <h2>Direct File Editor</h2>
+              <div className="section-actions">
                 <button 
-                  onClick={() => setShowImportSection(!showImportSection)}
-                  className="btn btn-primary"
-                >
-                  <i className="fas fa-upload"></i> {showImportSection ? 'Hide' : 'Show'} Import Options
-                </button>
-                
-                {showImportSection && (
-                  <div className="import-options">
-                    <div className="import-type-selector">
-                      <label>Import Type:</label>
-                      <select 
-                        value={importType} 
-                        onChange={(e) => setImportType(e.target.value as any)}
-                        className="import-select"
-                      >
-                        <option value="players">Players</option>
-                        <option value="courses">Courses</option>
-                        <option value="trips">Trips</option>
-                        <option value="rounds">Rounds</option>
-                        <option value="trip-scores">Trip Scores (Recommended)</option>
-                      </select>
-                    </div>
-
-                    {importType === 'trip-scores' && (
-                      <div className="info-box">
-                        <h4>📋 Trip Scores Import</h4>
-                        <p>This is the easiest way to import your golf data! You can use either format:</p>
-                        
-                        <h5>Basic Format (Scores Only):</h5>
-                        <ul>
-                          <li><strong>Trip Year:</strong> The year of the golf trip</li>
-                          <li><strong>Golfer Name:</strong> The player's name</li>
-                          <li><strong>Round Scores:</strong> Up to 3 round scores (leave blank if no score)</li>
-                        </ul>
-                        
-                        <h5>Extended Format (Scores + Courses):</h5>
-                        <ul>
-                          <li><strong>Trip Year:</strong> The year of the golf trip</li>
-                          <li><strong>Golfer Name:</strong> The player's name</li>
-                          <li><strong>Round Scores & Courses:</strong> Score and course name for each round</li>
-                        </ul>
-                        
-                        <h5>Extended Format with Dates (Scores + Courses + Dates):</h5>
-                        <ul>
-                          <li><strong>Trip Year:</strong> The year of the golf trip</li>
-                          <li><strong>Golfer Name:</strong> The player's name</li>
-                          <li><strong>Round Scores, Courses & Dates:</strong> Score, course name, and date for each round (YYYY-MM-DD format)</li>
-                        </ul>
-                        
-                        <p>The system will automatically create players, trips, courses, and rounds for you. If dates are not provided, they will default to June 1-3 of the trip year.</p>
-                      </div>
-                    )}
-
-                    <div className="template-section">
-                      <h4>CSV Template</h4>
-                      <p>Use this format for your CSV file:</p>
-                      <div className="template-preview">
-                        <pre>{getTemplate()}</pre>
-                      </div>
-                      <button 
-                        type="button" 
-                        onClick={downloadTemplate}
-                        className="btn btn-secondary"
-                      >
-                        <i className="fas fa-download"></i> Download Template
-                      </button>
-                    </div>
-
-                    <div className="csv-input-section">
-                      <h4>Paste CSV Data</h4>
-                      <textarea
-                        value={csvData}
-                        onChange={(e) => setCsvData(e.target.value)}
-                        placeholder="Paste your CSV data here..."
-                        rows={10}
-                        className="csv-textarea"
-                      />
-                    </div>
-
-                    <div className="import-actions">
-                      <button 
-                        type="button" 
-                        onClick={handleImport}
-                        disabled={!csvData.trim()}
-                        className="btn btn-primary"
-                      >
-                        <i className="fas fa-upload"></i> Import Data
-                      </button>
-                    </div>
-
-                    {importStatus !== 'idle' && (
-                      <div className={`import-status ${importStatus}`}>
-                        <p>{importMessage}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <h3>Data Recovery</h3>
-              <p>Recover data from backups or manage your current data.</p>
-              
-              <div className="recovery-section">
-                <button 
-                  onClick={() => setShowRecoverySection(!showRecoverySection)}
+                  onClick={loadEditorContent}
                   className="btn btn-secondary"
                 >
-                  <i className="fas fa-tools"></i> {showRecoverySection ? 'Hide' : 'Show'} Recovery Options
+                  <i className="fas fa-sync"></i> Reload
                 </button>
-                
-                {showRecoverySection && (
-                  <div className="recovery-options">
-                    <div className="restore-section">
-                      <h4>Restore from Backup</h4>
-                      <p>If you have a backup of your data, you can restore it here:</p>
-                      
-                      <div>
-                        <label htmlFor="backupData">Paste your backup JSON data:</label><br/>
-                        <textarea 
-                          id="backupData"
-                          value={backupData}
-                          onChange={(e) => setBackupData(e.target.value)}
-                          rows={10} 
-                          cols={80} 
-                          placeholder='Paste your backup data here...'
-                          className="backup-textarea"
-                        />
-                      </div>
-                      
-                      <button 
-                        onClick={restoreFromBackup}
-                        className="btn btn-success"
-                      >
-                        <i className="fas fa-undo"></i> Restore Data
-                      </button>
-                    </div>
-
-                    <div className="clear-section">
-                      <h4>Clear All Data</h4>
-                      <p>⚠️ <strong>Warning:</strong> This will permanently delete all your data!</p>
-                      <button 
-                        onClick={clearAllData}
-                        className="btn btn-danger"
-                      >
-                        <i className="fas fa-trash"></i> Clear All Data (Danger!)
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <h3>Player Record Merging</h3>
-              <p>Combine duplicate player records to consolidate their statistics.</p>
-              
-              <div className="merge-section">
-                <h4>Quick Actions</h4>
                 <button 
-                  onClick={handleSlagelMerge}
+                  onClick={() => setShowEditor(!showEditor)}
                   className="btn btn-primary"
                 >
-                  <i className="fas fa-merge"></i> Combine Matt Slagel & Matthew Slagel
+                  <i className="fas fa-edit"></i> {showEditor ? 'Hide' : 'Show'} Editor
                 </button>
-                <p className="help-text">This will merge Matthew Slagel into Matt Slagel, keeping Matt Slagel as the primary record.</p>
-              </div>
-
-              <div className="duplicates-section">
-                <h4>Potential Duplicates</h4>
-                <p>Players with similar names that might be duplicates:</p>
-                {(() => {
-                  const duplicates = findPotentialDuplicates()
-                  return duplicates.length > 0 ? (
-                    <div className="duplicates-list">
-                      {duplicates.map((group, index) => (
-                        <div key={index} className="duplicate-group">
-                          <h5>Group {index + 1}:</h5>
-                          <ul>
-                            {group.map(player => (
-                              <li key={player.id}>
-                                {player.name} (ID: {player.id})
-                                <br />
-                                <small>Rounds: {rounds.filter(r => r.playerId === player.id).length}</small>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="no-duplicates">No potential duplicates found.</p>
-                  )
-                })()}
               </div>
             </div>
+
+            <div className="info-box">
+              <h3>📋 Direct File Editing</h3>
+              <p>Edit the <code>src/data/golf-data.ts</code> file directly in your browser. Changes are validated and saved immediately.</p>
+              <ul>
+                <li><strong>Syntax Validation:</strong> Your changes are validated before saving</li>
+                <li><strong>Auto-formatting:</strong> Data is automatically formatted for consistency</li>
+                <li><strong>Immediate Save:</strong> Changes are saved directly to the file</li>
+                <li><strong>Error Handling:</strong> Invalid changes are caught and reported</li>
+              </ul>
+            </div>
+
+            {showEditor && (
+              <div className="editor-section">
+                <div className="editor-header">
+                  <h3>Editing golf-data.ts</h3>
+                  <div className="editor-actions">
+                    <button 
+                      onClick={loadEditorContent}
+                      className="btn btn-small btn-secondary"
+                      disabled={isEditing}
+                    >
+                      <i className="fas fa-undo"></i> Reset
+                    </button>
+                    <button 
+                      onClick={() => setIsEditing(!isEditing)}
+                      className="btn btn-small btn-primary"
+                    >
+                      <i className="fas fa-edit"></i> {isEditing ? 'Cancel Edit' : 'Edit'}
+                    </button>
+                    {isEditing && (
+                      <button 
+                        onClick={saveEditorContent}
+                        className="btn btn-small btn-success"
+                      >
+                        <i className="fas fa-save"></i> Save
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {editorError && (
+                  <div className="error-message">
+                    <i className="fas fa-exclamation-triangle"></i>
+                    {editorError}
+                  </div>
+                )}
+
+                <div className="editor-container">
+                  <textarea
+                    value={editorContent}
+                    onChange={(e) => setEditorContent(e.target.value)}
+                    disabled={!isEditing}
+                    className="code-editor"
+                    placeholder="Loading file content..."
+                    spellCheck={false}
+                  />
+                </div>
+
+                <div className="editor-info">
+                  <p><strong>File:</strong> <code>src/data/golf-data.ts</code></p>
+                  <p><strong>Status:</strong> {isEditing ? 'Editing' : 'Read-only'}</p>
+                  <p><strong>Validation:</strong> {editorError ? 'Errors found' : 'Valid'}</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

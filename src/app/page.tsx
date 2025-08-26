@@ -307,10 +307,21 @@ export default function Home() {
                   <div className="trips-grid">
                     {sortedTrips.map(trip => {
                       const tripRounds = rounds.filter(round => round.tripId === trip.id)
-                      const tripPlayers = new Set(tripRounds.map(round => round.playerId))
+                      const tripPlayersWithScores = new Set(tripRounds.map(round => round.playerId))
                       const tripCourses = new Set(tripRounds.map(round => round.courseId))
                       const tripYear = new Date(trip.startDate).getFullYear()
                       const tripName = `${tripYear} ${trip.location}`
+                      
+                      // Include attendees who don't have scores
+                      const attendeesWithoutScores = trip.attendees 
+                        ? players.filter(player => 
+                            trip.attendees!.includes(player.id) && 
+                            !tripRounds.some(round => round.playerId === player.id)
+                          )
+                        : []
+                      
+                      // Total players = players with scores + attendees without scores
+                      const totalTripPlayers = tripPlayersWithScores.size + attendeesWithoutScores.length
                       
                       return (
                         <Link key={trip.id} href={`/trips/${trip.id}`} className="trip-card-link">
@@ -327,17 +338,20 @@ export default function Home() {
                               </div>
                             </div>
                             <div className="trip-details">
-                              {tripRounds.length > 0 ? (
+                              {tripRounds.length > 0 || attendeesWithoutScores.length > 0 ? (
                                 <>
                                   <p><i className="fas fa-golf-ball"></i> {tripRounds.length} rounds</p>
-                                  <p><i className="fas fa-users"></i> {tripPlayers.size} players</p>
+                                  <p><i className="fas fa-users"></i> {totalTripPlayers} players</p>
+                                  {attendeesWithoutScores.length > 0 && (
+                                    <p><i className="fas fa-info-circle"></i> {attendeesWithoutScores.length} without scores</p>
+                                  )}
                                   {trip.championPlayerId && (
                                     <p><i className="fas fa-trophy"></i> Champion: {players.find(p => p.id === trip.championPlayerId)?.name || 'Unknown'}</p>
                                   )}
                                 </>
                               ) : (
                                 <div className="trip-empty-state">
-                                  <p><i className="fas fa-info-circle"></i> Rounds not tracked</p>
+                                  <p><i className="fas fa-info-circle"></i> No players tracked</p>
                                 </div>
                               )}
                             </div>
@@ -360,7 +374,7 @@ export default function Home() {
                 <div className="all-players-section">
                   <div className="players-grid">
                     {players
-                      .map(player => calculatePlayerStats(player, rounds))
+                      .map(player => calculatePlayerStats(player, rounds, trips))
                       .sort((a, b) => {
                         // Put players without scores at the end
                         if (a.averageScore === 0 && b.averageScore !== 0) return 1
@@ -388,10 +402,6 @@ export default function Home() {
                               <div className="stat-item">
                                 <span className="stat-value">{player.totalTrips}</span>
                                 <span className="stat-label">Trips</span>
-                              </div>
-                              <div className="stat-item">
-                                <span className="stat-value">{player.yearsPlayed}</span>
-                                <span className="stat-label">Years</span>
                               </div>
                               <div className="stat-item">
                                 <span className="stat-value">{rounds.filter(r => r.playerId === player.id).length}</span>

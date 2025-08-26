@@ -197,7 +197,8 @@ export default function PlayerDetails() {
     )
   }
 
-  const playerStats = calculatePlayerStats(player, rounds)
+  // Calculate player stats
+  const playerStats = calculatePlayerStats(player, rounds, trips)
   const uniqueYears = Object.keys(yearStats).map(y => parseInt(y)).sort((a, b) => b - a)
   const bestScore = Math.min(...playerRounds.map(pr => pr.round.score))
   const worstScore = Math.max(...playerRounds.map(pr => pr.round.score))

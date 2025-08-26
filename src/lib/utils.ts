@@ -121,10 +121,21 @@ export function calculatePlayerAverage(player: Player, rounds: Round[]): number 
   return Math.round((totalScore / playerRounds.length) * 10) / 10
 }
 
-export function calculatePlayerStats(player: Player, rounds: Round[]): Player {
+export function calculatePlayerStats(player: Player, rounds: Round[], trips: Trip[] = []): Player {
   const playerRounds = rounds.filter(round => round.playerId === player.id)
   
-  if (playerRounds.length === 0) {
+  // Get trips where player has scores
+  const tripsWithScores = new Set(playerRounds.map(round => round.tripId))
+  
+  // Get trips where player attended but doesn't have scores
+  const tripsWithoutScores = trips.filter(trip => 
+    trip.attendees?.includes(player.id) && !tripsWithScores.has(trip.id)
+  )
+  
+  // Total trips = trips with scores + trips without scores
+  const totalTrips = tripsWithScores.size + tripsWithoutScores.length
+  
+  if (playerRounds.length === 0 && tripsWithoutScores.length === 0) {
     return {
       ...player,
       yearsPlayed: 0,
@@ -134,19 +145,24 @@ export function calculatePlayerStats(player: Player, rounds: Round[]): Player {
   }
 
   const uniqueYears = new Set(playerRounds.map(round => round.year))
-  const uniqueTrips = new Set(playerRounds.map(round => round.tripId))
+  
+  // Add years from trips without scores
+  tripsWithoutScores.forEach(trip => {
+    const tripYear = new Date(trip.startDate).getFullYear()
+    uniqueYears.add(tripYear)
+  })
   
   const averageScore = calculatePlayerAverage(player, rounds)
-  const bestScore = Math.min(...playerRounds.map(round => round.score))
+  const bestScore = playerRounds.length > 0 ? Math.min(...playerRounds.map(round => round.score)) : undefined
   const bestScoreRound = playerRounds.find(round => round.score === bestScore)
   
   return {
     ...player,
     yearsPlayed: uniqueYears.size,
     averageScore,
-    totalTrips: uniqueTrips.size,
-    firstTrip: Math.min(...Array.from(uniqueYears)),
-    lastTrip: Math.max(...Array.from(uniqueYears)),
+    totalTrips,
+    firstTrip: uniqueYears.size > 0 ? Math.min(...Array.from(uniqueYears)) : undefined,
+    lastTrip: uniqueYears.size > 0 ? Math.max(...Array.from(uniqueYears)) : undefined,
     bestScore,
     bestScoreYear: bestScoreRound?.year,
     bestScoreCourse: bestScoreRound?.courseId

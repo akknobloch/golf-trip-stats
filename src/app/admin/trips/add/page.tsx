@@ -16,7 +16,8 @@ export default function AddTrip() {
     description: '',
     weather: '',
     notes: '',
-    championPlayerId: ''
+    championPlayerId: '',
+    attendees: [] as string[]
   })
 
   useEffect(() => {
@@ -46,7 +47,8 @@ export default function AddTrip() {
       description: formData.description || undefined,
       weather: formData.weather || undefined,
       notes: formData.notes || undefined,
-      championPlayerId: formData.championPlayerId || undefined
+      championPlayerId: formData.championPlayerId || undefined,
+      attendees: formData.attendees.length > 0 ? formData.attendees : undefined
     }
     
     // Load existing trips and add new one
@@ -65,6 +67,14 @@ export default function AddTrip() {
     }))
   }
 
+  const handleAttendeeChange = (playerId: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      attendees: checked 
+        ? [...prev.attendees, playerId]
+        : prev.attendees.filter(id => id !== playerId)
+    }))
+  }
 
 
   return (
@@ -175,6 +185,25 @@ export default function AddTrip() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="form-group">
+              <label>Attendees (No Scores Recorded)</label>
+              <div className="attendees-list">
+                {players.map(player => (
+                  <label key={player.id} className="attendee-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={formData.attendees.includes(player.id)}
+                      onChange={(e) => handleAttendeeChange(player.id, e.target.checked)}
+                    />
+                    <span>{player.name}</span>
+                  </label>
+                ))}
+              </div>
+              <small className="form-help">
+                Select players who attended this trip but don't have scores recorded
+              </small>
             </div>
 
             <div className="form-actions">

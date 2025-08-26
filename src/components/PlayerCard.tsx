@@ -1,5 +1,5 @@
-import { Player, Round, Trip, Course } from '@/lib/types'
 import { calculatePlayerAverage, calculatePlayerStats } from '@/lib/utils'
+import { Player, Round, Trip, Course } from '@/lib/types'
 import ParallaxCard from './ParallaxCard'
 
 interface PlayerCardProps {
@@ -12,7 +12,7 @@ interface PlayerCardProps {
 }
 
 export default function PlayerCard({ player, rounds, trips, courses, onViewDetails, onDelete }: PlayerCardProps) {
-  const playerStats = calculatePlayerStats(player, rounds)
+  const playerStats = calculatePlayerStats(player, rounds, trips)
   const playerRounds = rounds.filter(round => round.playerId === player.id)
   const playerTrips = trips.filter(trip => 
     playerRounds.some(round => round.tripId === trip.id)
@@ -51,12 +51,8 @@ export default function PlayerCard({ player, rounds, trips, courses, onViewDetai
           <span className="stat-label">Average</span>
         </div>
         <div className="stat-item">
-          <span className="stat-value">{playerTrips.length}</span>
+          <span className="stat-value">{playerStats.totalTrips}</span>
           <span className="stat-label">Trips</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-value">{playerStats.yearsPlayed}</span>
-          <span className="stat-label">Years</span>
         </div>
         <div className="stat-item">
           <span className="stat-value">{playerRounds.length}</span>

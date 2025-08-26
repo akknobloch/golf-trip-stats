@@ -195,6 +195,13 @@ export const staticPlayers: Player[] = [
     "totalTrips": 0
   },
   {
+    "id": "17554599416444p",
+    "name": "Unknown Player",
+    "yearsPlayed": 0,
+    "averageScore": 0,
+    "totalTrips": 0
+  },
+  {
     "id": "17554599416447p",
     "name": "Matt Slagel",
     "yearsPlayed": 0,
@@ -228,6 +235,41 @@ export const staticPlayers: Player[] = [
     "yearsPlayed": 0,
     "averageScore": 0,
     "totalTrips": 0
+  },
+  {
+    "name": "Ty Taufer",
+    "yearsPlayed": 0,
+    "averageScore": 0,
+    "totalTrips": 0,
+    "id": "1756157363493"
+  },
+  {
+    "name": "Tyler Paxson",
+    "yearsPlayed": 0,
+    "averageScore": 0,
+    "totalTrips": 0,
+    "id": "1756157463435"
+  },
+  {
+    "name": "Clint Sutter",
+    "yearsPlayed": 0,
+    "averageScore": 0,
+    "totalTrips": 0,
+    "id": "1756157472708"
+  },
+  {
+    "name": "Tristan Herrmann",
+    "yearsPlayed": 0,
+    "averageScore": 0,
+    "totalTrips": 0,
+    "id": "1756157497451"
+  },
+  {
+    "name": "Karl Weyeneth",
+    "yearsPlayed": 0,
+    "averageScore": 0,
+    "totalTrips": 0,
+    "id": "1756245292015"
   }
 ]
 
@@ -328,7 +370,7 @@ export const staticCourses: Course[] = [
   },
   {
     "id": "17555225442771c1",
-    "name": "",
+    "name": "Cog Hill - #3 Course",
     "location": "Imported Location",
     "par": 72,
     "timesPlayed": 0
@@ -354,13 +396,44 @@ export const staticTrips: Trip[] = [
     "id": "17553563586421",
     "startDate": "2013-09-20",
     "endDate": "2013-09-22",
-    "location": "Ozarks, MO"
+    "location": "Ozarks, MO",
+    "description": "",
+    "weather": "",
+    "notes": "",
+    "championPlayerId": "",
+    "attendees": [
+      "17553556526151",
+      "17553556526153",
+      "17553556526154",
+      "17553556526152",
+      "17553556526157",
+      "17554599416447p",
+      "175535565261526",
+      "1755398345513",
+      "1756157472708",
+      "1756157463435",
+      "1756157497451"
+    ]
   },
   {
     "id": "17553563586422",
     "startDate": "2014-09-20",
     "endDate": "2014-09-22",
-    "location": ""
+    "location": "Ozarks, MO",
+    "description": "",
+    "weather": "",
+    "notes": "",
+    "championPlayerId": "",
+    "attendees": [
+      "17553556526157",
+      "17553556526154",
+      "175535565261513",
+      "175535565261518",
+      "175535565261521",
+      "1755398345513",
+      "1756157363493",
+      "17555252748087p"
+    ]
   },
   {
     "id": "17553563586423",

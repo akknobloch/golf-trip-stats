@@ -30,6 +30,7 @@ export interface Trip {
   weather?: string
   notes?: string
   championPlayerId?: string
+  attendees?: string[] // Array of player IDs who attended but don't have scores recorded
 }
 
 export interface Player {

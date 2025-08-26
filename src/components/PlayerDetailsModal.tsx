@@ -1,17 +1,15 @@
-import { Player, Round } from '@/lib/types'
 import { calculatePlayerAverage, calculatePlayerStats } from '@/lib/utils'
+import { Player, Round, Trip } from '@/lib/types'
 
 interface PlayerDetailsModalProps {
-  isOpen: boolean
-  onClose: () => void
-  player: Player | null
+  player: Player
   rounds: Round[]
+  trips: Trip[]
+  onClose: () => void
 }
 
-export default function PlayerDetailsModal({ isOpen, onClose, player, rounds }: PlayerDetailsModalProps) {
-  if (!isOpen || !player) return null
-
-  const playerStats = calculatePlayerStats(player, rounds)
+export default function PlayerDetailsModal({ player, rounds, trips, onClose }: PlayerDetailsModalProps) {
+  const playerStats = calculatePlayerStats(player, rounds, trips)
   const playerRounds = rounds.filter(round => round.playerId === player.id)
   const sortedRounds = [...playerRounds].sort((a, b) => b.year - a.year) // Newest first
 
