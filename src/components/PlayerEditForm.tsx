@@ -107,3 +107,4 @@ export default function PlayerEditForm({ player, onSave, onCancel, isEditing = f
     </div>
   )
 }
+

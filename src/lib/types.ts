@@ -31,6 +31,15 @@ export interface Trip {
   notes?: string
   championPlayerId?: string
   attendees?: string[] // Array of player IDs who attended but don't have scores recorded
+  photos?: TripPhoto[] // Array of photos for this trip
+}
+
+export interface TripPhoto {
+  id: string
+  url: string
+  caption?: string
+  date?: string
+  thumbnailUrl?: string
 }
 
 export interface Player {

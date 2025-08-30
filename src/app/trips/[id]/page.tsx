@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Player, Course, Trip, Round } from '@/lib/types'
 import { formatDate, getDateValue, calculateTripDuration } from '@/lib/utils'
 import { getData } from '../../../lib/data'
+import PhotoGallery from '@/components/PhotoGallery'
 
 
 
@@ -40,6 +41,11 @@ export default function TripDetails() {
   const [tripRounds, setTripRounds] = useState<TripRound[]>([])
   const [playerStats, setPlayerStats] = useState<PlayerTripStats[]>([])
   const [champion, setChampion] = useState<PlayerTripStats | null>(null)
+
+  useEffect(() => {
+    // Scroll to top when component mounts
+    window.scrollTo(0, 0)
+  }, [])
 
   useEffect(() => {
     // Load data from static source
@@ -246,6 +252,17 @@ export default function TripDetails() {
                 </div>
               </div>
             )}
+
+        {/* Photo Gallery */}
+        {trip.photos && trip.photos.length > 0 && (
+          <div className="trip-photos-section">
+            <PhotoGallery 
+              photos={trip.photos} 
+              title="📸 Trip Photos" 
+              className="trip-photo-gallery"
+            />
+          </div>
+        )}
 
         {/* Content sections - only show when there are rounds */}
         {tripRounds.length > 0 && (

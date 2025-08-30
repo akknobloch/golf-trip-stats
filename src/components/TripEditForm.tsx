@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Trip, Player } from '@/lib/types'
+import { Trip, Player, TripPhoto } from '@/lib/types'
+import PhotoUpload from './PhotoUpload'
 
 interface TripEditFormProps {
   trip?: Trip
@@ -22,6 +23,7 @@ export default function TripEditForm({ trip, players, onSave, onCancel, isEditin
     championPlayerId: '',
     attendees: [] as string[]
   })
+  const [photos, setPhotos] = useState<TripPhoto[]>([])
 
   useEffect(() => {
     if (trip) {
@@ -35,6 +37,7 @@ export default function TripEditForm({ trip, players, onSave, onCancel, isEditin
         championPlayerId: trip.championPlayerId || '',
         attendees: trip.attendees || []
       })
+      setPhotos(trip.photos || [])
     } else {
       // Set default dates for new trips
       const today = new Date()
@@ -44,6 +47,7 @@ export default function TripEditForm({ trip, players, onSave, onCancel, isEditin
         startDate: nextYear.toISOString().split('T')[0],
         endDate: new Date(nextYear.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 3 days later
       }))
+      setPhotos([])
     }
   }, [trip])
 
@@ -61,7 +65,7 @@ export default function TripEditForm({ trip, players, onSave, onCancel, isEditin
       alert('Location is required')
       return
     }
-    onSave(formData)
+    onSave({ ...formData, photos })
   }
 
   const handleAttendeeChange = (playerId: string, checked: boolean) => {
@@ -188,6 +192,14 @@ export default function TripEditForm({ trip, players, onSave, onCancel, isEditin
             />
           </div>
 
+          {/* Photo Upload Section */}
+          <div className="form-group">
+            <PhotoUpload 
+              onPhotosAdded={setPhotos}
+              existingPhotos={photos}
+            />
+          </div>
+
           <div className="form-actions">
             <button type="button" onClick={onCancel} className="btn btn-secondary">
               Cancel
@@ -201,3 +213,5 @@ export default function TripEditForm({ trip, players, onSave, onCancel, isEditin
     </div>
   )
 }
+
+

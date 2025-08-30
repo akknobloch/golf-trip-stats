@@ -326,6 +326,34 @@ export default function Home() {
                       return (
                         <Link key={trip.id} href={`/trips/${trip.id}`} className="trip-card-link">
                           <ParallaxCard className="trip-card" intensity={8} rotationIntensity={2}>
+                            {/* Trip Photo Thumbnail */}
+                            <div className="trip-photo-thumbnail">
+                              {trip.photos && trip.photos.length > 0 ? (
+                                <>
+                                  <img 
+                                    src={trip.photos[0].thumbnailUrl || trip.photos[0].url} 
+                                    alt={`${trip.location} trip photo`}
+                                    loading="lazy"
+                                  />
+                                  <div className="photo-count">
+                                    <i className="fas fa-camera"></i>
+                                    <span>{trip.photos.length}</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="trip-photo-placeholder">
+                                    <span className="golf-emoji">🏌️</span>
+                                    <span className="fore-text">Fore!</span>
+                                  </div>
+                                  <div className="photo-count placeholder">
+                                    <i className="fas fa-camera"></i>
+                                    <span>0</span>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                            
                             <div className="trip-header">
                               <h3>{trip.location}</h3>
                               <div className="trip-header-right">
@@ -338,22 +366,8 @@ export default function Home() {
                               </div>
                             </div>
                             <div className="trip-details">
-                              {tripRounds.length > 0 || attendeesWithoutScores.length > 0 ? (
-                                <>
-                                  <p><i className="fas fa-golf-ball"></i> {tripRounds.length} rounds</p>
-                                  <p><i className="fas fa-users"></i> {totalTripPlayers} players</p>
-                                  {attendeesWithoutScores.length > 0 && (
-                                    <p><i className="fas fa-info-circle"></i> {attendeesWithoutScores.length} without scores</p>
-                                  )}
-                                  {trip.championPlayerId && (
-                                    <p><i className="fas fa-trophy"></i> Champion: {players.find(p => p.id === trip.championPlayerId)?.name || 'Unknown'}</p>
-                                  )}
-                                </>
-                              ) : (
-                                <div className="trip-empty-state">
-                                  <p><i className="fas fa-info-circle"></i> No players tracked</p>
-                                </div>
-                              )}
+                              <p><i className="fas fa-users"></i> {totalTripPlayers} players</p>
+                              <p><i className="fas fa-trophy"></i> {trip.championPlayerId ? players.find(p => p.id === trip.championPlayerId)?.name || 'Unknown' : 'Unknown'}</p>
                             </div>
                           </ParallaxCard>
                         </Link>

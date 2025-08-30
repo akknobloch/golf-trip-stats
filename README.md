@@ -8,6 +8,7 @@ A Next.js application for tracking and managing golf trip results over the years
 - Track years played and average scores
 - View statistics including total players, years tracked, and best average
 - **Crown a champion golfer for each trip** - Select the winner of each golf trip
+- **📸 Photo Gallery** - Add and view photos for each golf trip
 - Export and import player data
 - Responsive design with modern UI
 - Local storage persistence
@@ -71,7 +72,9 @@ src/
 
 5. **Manage Players**: Click on player cards to view details or use the action buttons to view details or delete players.
 
-6. **Export/Import**: Use the export and import buttons to backup and restore your player data.
+6. **Photo Gallery**: Add photos to trips using the admin panel. Photos are displayed as thumbnails on trip cards and in a full gallery on trip detail pages.
+
+7. **Export/Import**: Use the export and import buttons to backup and restore your player data.
 
 ## Technologies Used
 

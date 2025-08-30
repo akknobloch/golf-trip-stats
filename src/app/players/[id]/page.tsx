@@ -51,6 +51,11 @@ export default function PlayerDetails() {
   const [yearStats, setYearStats] = useState<{ [year: number]: { rounds: number, average: number, best: number } }>({})
 
   useEffect(() => {
+    // Scroll to top when component mounts
+    window.scrollTo(0, 0)
+  }, [])
+
+  useEffect(() => {
     // Load data from static source
     const loadData = () => {
       try {
