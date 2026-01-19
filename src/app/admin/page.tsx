@@ -342,6 +342,8 @@ player2,trip1,course1,78,2024-06-15,2024,Personal best`
   }
 
   // Inline editing functions
+  const MAX_PHOTO_DATA_URL_LENGTH = 900000
+
   const normalizeTripPhotosForSave = (trip: Trip): Trip => {
     if (!trip.photos || trip.photos.length === 0) {
       return trip
@@ -352,7 +354,7 @@ player2,trip1,course1,78,2024-06-15,2024,Personal best`
       const hasDataUrl = typeof normalized.url === 'string' && normalized.url.startsWith('data:')
       const hasThumbnail = typeof normalized.thumbnailUrl === 'string' && normalized.thumbnailUrl.length > 0
 
-      if (hasDataUrl && hasThumbnail) {
+      if (hasDataUrl && hasThumbnail && normalized.url.length > MAX_PHOTO_DATA_URL_LENGTH) {
         normalized.url = normalized.thumbnailUrl as string
       }
 
@@ -909,6 +911,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
                       <p><strong>Average:</strong> {playerStats.averageScore}</p>
                       <p><strong>Total Rounds:</strong> {rounds.filter(r => r.playerId === player.id).length}</p>
                       <p><strong>Best Score:</strong> {playerStats.bestScore || 'N/A'}</p>
+                      <p><strong>Championships:</strong> {trips.filter(trip => trip.championPlayerId === player.id).length}</p>
                     </div>
                   </div>
                 )

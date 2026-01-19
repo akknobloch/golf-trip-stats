@@ -29,6 +29,8 @@ body {
     margin-bottom: 2rem;
     border-radius: 0 0 20px 20px;
     box-shadow: 0 4px 20px rgba(5, 150, 105, 0.3);
+    z-index: 3;
+    position: relative;
 }
 
 .header-content {
@@ -67,6 +69,8 @@ body {
 /* Main content */
 .main-content {
     padding: 0 0 2rem 0;
+    z-index: 2;
+    position: relative;
 }
 
 /* Landing page styles */
@@ -1285,6 +1289,9 @@ body {
     color: #059669;
     margin-right: 0.5rem;
 }
+.trip-details .fa-trophy {
+    color: #f59e0b;
+}
 
 /* Players section */
 .players-section, .top-players-section, .recent-trips-section, .courses-section {
@@ -1378,6 +1385,14 @@ body {
     margin-bottom: 1rem;
 }
 
+.player-header_group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+
 .player-name {
     font-size: 1.3rem;
     font-weight: 600;
@@ -1396,6 +1411,7 @@ body {
 .player-actions {
     display: flex;
     gap: 0.5rem;
+    align-items: center;
 }
 
 .action-btn {
@@ -1485,24 +1501,73 @@ body {
 /* Enhanced Player Card Styles */
 .player-best-score {
     margin-top: 0.75rem;
-    padding: 0.75rem;
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
     border-radius: 8px;
-    border: 1px solid #f59e0b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .best-score-header {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    margin-bottom: 0.4rem;
     font-size: 0.8rem;
     color: #92400e;
     font-weight: 600;
 }
 
-.best-score-header i {
+.best-score-header i,
+.player-championships-badge i {
     color: #f59e0b;
+}
+
+.player-championships-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.player-championships-badge::after,
+.player-championships-badge::before {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.player-championships-badge::after {
+    content: attr(title);
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    transform: translateY(4px);
+    background: #111827;
+    color: #f9fafb;
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+    z-index: 5;
+}
+
+.player-championships-badge::before {
+    content: "";
+    position: absolute;
+    right: 10px;
+    bottom: calc(100% + 2px);
+    border-width: 6px 6px 0 6px;
+    border-style: solid;
+    border-color: #111827 transparent transparent transparent;
+    transform: translateY(4px);
+    z-index: 4;
+}
+
+.player-championships-badge:hover::after,
+.player-championships-badge:hover::before {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .best-score-content {
@@ -1513,7 +1578,7 @@ body {
 }
 
 .best-score-value {
-    font-size: 1.6rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #92400e;
     flex-shrink: 0;
@@ -1530,7 +1595,10 @@ body {
 .best-score-year {
     font-size: 0.75rem;
     color: #92400e;
-    font-weight: 500;
+    background-color: #fef3c7;
+    font-weight: 400;
+    border-radius: 9999px;
+    padding: 0px 4px;
     white-space: nowrap;
 }
 
@@ -2193,10 +2261,12 @@ body {
 .champion-card {
     background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
     color: white;
-    border-radius: 15px;
-    padding: 1.5rem;
+    border-radius: 0 0 15px 15px;
+    padding: 2.5rem 0.5rem 0.5rem 0.5rem;
     box-shadow: 0 6px 25px rgba(251, 191, 36, 0.3);
     text-align: center;
+    margin-top: -4rem;
+    z-index: -9999;
 }
 
 .champion-header {

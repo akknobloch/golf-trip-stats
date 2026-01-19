@@ -208,6 +208,7 @@ export default function PlayerDetails() {
   const bestScore = Math.min(...playerRounds.map(pr => pr.round.score))
   const worstScore = Math.max(...playerRounds.map(pr => pr.round.score))
   const bestScoreRound = playerRounds.find(pr => pr.round.score === bestScore)
+  const championshipCount = trips.filter(trip => trip.championPlayerId === playerId).length
 
   return (
     <div className="container">
@@ -224,6 +225,16 @@ export default function PlayerDetails() {
       </header>
 
       <main className="main-content">
+        {championshipCount > 0 && (
+          <div className="champion-section">
+            <div className="champion-card">
+              <div className="champion-player">
+                <h3>🏆 {championshipCount}x Champion</h3>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Player Overview */}
         <div className="player-overview">
           <div className="overview-grid">

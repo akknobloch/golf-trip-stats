@@ -253,7 +253,23 @@ export default function TripDetails() {
               </div>
             )}
 
-        {/* Photo Gallery */}
+        {/* Content sections - only show when there are rounds */}
+        {tripRounds.length > 0 && (
+          <>
+            {/* Champion Highlight */}
+            {champion && (
+              <div className="champion-section">
+                <div className="champion-card">
+                  <div className="champion-content">
+                    <div className="champion-player">
+                      <h3>🏆 {champion.player.name}</h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Photo Gallery */}
         {trip.photos && trip.photos.length > 0 && (
           <div className="trip-photos-section">
             <PhotoGallery 
@@ -263,26 +279,6 @@ export default function TripDetails() {
             />
           </div>
         )}
-
-        {/* Content sections - only show when there are rounds */}
-        {tripRounds.length > 0 && (
-          <>
-            {/* Champion Highlight */}
-            {champion && (
-              <div className="champion-section">
-                <div className="champion-card">
-                  <div className="champion-header">
-                    <i className="fas fa-crown"></i>
-                    <h2>🏆 Trip Champion</h2>
-                  </div>
-                  <div className="champion-content">
-                    <div className="champion-player">
-                      <h3>{champion.player.name}</h3>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Trip Overview */}
             <div className="trip-overview">

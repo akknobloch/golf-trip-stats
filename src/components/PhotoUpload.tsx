@@ -51,15 +51,17 @@ export default function PhotoUpload({ onPhotosAdded, existingPhotos = [], classN
       const newPhotos: TripPhoto[] = []
 
       for (const file of imageFiles) {
-        const thumbnailUrl = await createThumbnail(file)
-        
+        const displayUrl = await createResizedDataURL(file, 1400, 0.88)
+        const thumbnailUrl = await createResizedDataURL(file, 400, 0.9)
+
         const photo: TripPhoto = {
           id: `photo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          url: thumbnailUrl,
+          url: displayUrl,
+          thumbnailUrl,
           caption: file.name.replace(/\.[^/.]+$/, ''), // Remove file extension for caption
           date: new Date().toISOString()
         }
-        
+
         newPhotos.push(photo)
       }
 
@@ -72,15 +74,14 @@ export default function PhotoUpload({ onPhotosAdded, existingPhotos = [], classN
     }
   }
 
-  const createThumbnail = (file: File): Promise<string> => {
+  const createResizedDataURL = (file: File, maxSize: number, quality: number): Promise<string> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
       const img = new Image()
       
       img.onload = () => {
-        // Calculate thumbnail dimensions (max 400x400 for better quality)
-        const maxSize = 400
+        // Calculate resized dimensions
         let { width, height } = img
         
         if (width > height) {
@@ -105,7 +106,7 @@ export default function PhotoUpload({ onPhotosAdded, existingPhotos = [], classN
         }
         
         ctx?.drawImage(img, 0, 0, width, height)
-        resolve(canvas.toDataURL('image/jpeg', 0.95))
+        resolve(canvas.toDataURL('image/jpeg', quality))
       }
       
       img.onerror = reject

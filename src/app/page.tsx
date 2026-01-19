@@ -435,13 +435,22 @@ export default function Home() {
                         if (a.averageScore === 0 && b.averageScore === 0) return a.name.localeCompare(b.name)
                         return a.averageScore - b.averageScore
                       })
-                      .map((player, index) => (
+                      .map((player, index) => {
+                        const championshipCount = trips.filter(trip => trip.championPlayerId === player.id).length
+                        return (
                         <Link key={player.id} href={`/players/${player.id}`} className="player-card-link">
                           <ParallaxCard className="player-card" intensity={12} rotationIntensity={4}>
                             <div className="player-header">
-                              <div className="player-rank">#{index + 1}</div>
-                              <div className="player-name">{player.name}</div>
+                              <div className='player-header_group'>
+                                <div className="player-rank">#{index + 1}</div>
+                                <div className="player-name">{player.name}</div>
+                              </div>
                               <div className="player-actions">
+                                {championshipCount > 0 && (
+                                  <div className="player-championships-badge" title={`${championshipCount} Trip Championship${championshipCount > 1 ? 's' : ''}`}>
+                                    <i className="fas fa-trophy"></i> {championshipCount}
+                                  </div>
+                                )}
                                 <div className="action-btn" title="View Details">
                                   <i className="fas fa-arrow-right"></i>
                                 </div>
@@ -479,7 +488,7 @@ export default function Home() {
                             )}
                           </ParallaxCard>
                         </Link>
-                      ))}
+                      )})}
                   </div>
                 </div>
               ) : (
