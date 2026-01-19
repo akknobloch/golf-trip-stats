@@ -342,12 +342,25 @@ export function getDateValue(dateString: string): number {
 
 export function calculateTripDuration(startDate: string, endDate: string): number | string {
   try {
-    const start = new Date(startDate)
-    const end = new Date(endDate)
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/
+    const toUtcTimestamp = (value: string): number => {
+      if (dateOnlyPattern.test(value)) {
+        const [year, month, day] = value.split('-').map(part => Number(part))
+        return Date.UTC(year, month - 1, day)
+      }
+      return new Date(value).getTime()
+    }
+
+    const start = toUtcTimestamp(startDate)
+    const end = toUtcTimestamp(endDate)
+    if (isNaN(start) || isNaN(end)) {
       return 'N/A'
     }
-    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+    const diffMs = end - start
+    if (diffMs < 0) {
+      return 'N/A'
+    }
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1
   } catch {
     return 'N/A'
   }
