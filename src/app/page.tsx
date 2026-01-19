@@ -115,6 +115,44 @@ export default function Home() {
     }
     return a.name.localeCompare(b.name) // Then by name alphabetically
   })
+  const courseScoreStats = courses.map(course => {
+    const courseRounds = rounds.filter(round => round.courseId === course.id)
+    if (courseRounds.length === 0) {
+      return {
+        courseId: course.id,
+        averageScore: null,
+        variance: null,
+        roundsCount: 0
+      }
+    }
+
+    const scores = courseRounds.map(round => round.score)
+    const averageScore = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
+    const variance = Math.max(...scores) - Math.min(...scores)
+
+    return {
+      courseId: course.id,
+      averageScore,
+      variance,
+      roundsCount: scores.length
+    }
+  })
+  const coursesWithScores = courseScoreStats.filter(stat => stat.roundsCount > 0)
+  const hardestCourseId = coursesWithScores.length > 0
+    ? coursesWithScores.reduce((max, current) => (
+      (current.averageScore ?? 0) > (max.averageScore ?? 0) ? current : max
+    )).courseId
+    : null
+  const easiestCourseId = coursesWithScores.length > 0
+    ? coursesWithScores.reduce((min, current) => (
+      (current.averageScore ?? 0) < (min.averageScore ?? 0) ? current : min
+    )).courseId
+    : null
+  const mostVarianceCourseId = coursesWithScores.length > 0
+    ? coursesWithScores.reduce((max, current) => (
+      (current.variance ?? 0) > (max.variance ?? 0) ? current : max
+    )).courseId
+    : null
 
   return (
     <div className="container">
@@ -520,6 +558,24 @@ export default function Home() {
                           <div className="course-details">
                             <p><i className="fas fa-map-marker-alt"></i> {course.location}</p>
                             <p><i className="fas fa-play"></i> Played {calculateCourseTimesPlayed(course.id, rounds)} times</p>
+                            <div className='course-stats'>
+                                                          <p>
+                              <i className="fas fa-chart-line"></i> Avg Score: {
+                                courseScoreStats.find(stat => stat.courseId === course.id)?.averageScore ?? '--'
+                              }
+                            </p>
+                              <div className="course-tags">
+                                {course.id === hardestCourseId && (
+                                  <span className="course-tag course-tag-hardest">🔥 Hardest</span>
+                                )}
+                                {course.id === easiestCourseId && (
+                                  <span className="course-tag course-tag-easiest">🪶 Easiest</span>
+                                )}
+                                {course.id === mostVarianceCourseId && (
+                                  <span className="course-tag course-tag-variance">🎢 Most Variance</span>
+                                )}
+                              </div>
+                            </div>
                             {course.lastPlayed && (
                               <p><i className="fas fa-calendar"></i> Last: {course.lastPlayed}</p>
                             )}

@@ -1284,6 +1284,38 @@ body {
     margin-bottom: 0.5rem;
 }
 
+.course-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0 0 0.75rem;
+}
+
+.course-tag {
+    background: #f3f4f6;
+    border-radius: 999px;
+    color: #374151;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    white-space: nowrap;
+}
+
+.course-tag-hardest {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.course-tag-easiest {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.course-tag-variance {
+    background: #e0f2fe;
+    color: #075985;
+}
+
 .trip-details i, .course-details i {
     width: 20px;
     color: #059669;
@@ -3146,7 +3178,8 @@ body {
     
     .course-header {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
+        justify-content: space-between;
         gap: 0.5rem;
     }
     
@@ -3642,16 +3675,7 @@ body {
 .course-header-right {
     display: flex;
     align-items: center;
-    gap: 1rem;
-}
-
-.course-actions {
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.course-card-link:hover .course-actions {
-    opacity: 1;
+    gap: 0.5rem;
 }
 
 .loading, .error {
