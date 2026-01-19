@@ -13,6 +13,7 @@ export default function Home() {
   const [courses, setCourses] = useState<Course[]>([])
   const [trips, setTrips] = useState<Trip[]>([])
   const [rounds, setRounds] = useState<Round[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [stats, setStats] = useState<Stats>({
     totalPlayers: 0,
     totalYears: 0,
@@ -40,6 +41,8 @@ export default function Home() {
         setRounds(data.rounds)
       } catch (error) {
         console.error('Error loading data:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
     
@@ -246,54 +249,69 @@ export default function Home() {
         </div>
 
         {/* Stats Overview */}
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon">
-              <i className="fas fa-users"></i>
-            </div>
-            <div className="stat-content">
-              <h3>{stats.totalPlayers}</h3>
-              <p>Total Players</p>
-            </div>
+        {isLoading ? (
+          <div className="stats-grid">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={`stat-skeleton-${index}`} className="stat-card skeleton-card">
+                <div className="stat-icon skeleton-block skeleton-icon"></div>
+                <div className="stat-content">
+                  <div className="skeleton-line skeleton-line-lg"></div>
+                  <div className="skeleton-line skeleton-line-sm"></div>
+                  <div className="skeleton-line skeleton-line-xs"></div>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">
-              <i className="fas fa-trophy"></i>
-            </div>
-            <div className="stat-content">
-              <h3>{stats.bestAverage}</h3>
-              <p>Best Average</p>
-              {stats.bestAveragePlayer && (
-                <small>{stats.bestAveragePlayer}</small>
-              )}
-            </div>
-          </div>
-          {stats.bestScore && (
+        ) : (
+          <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-icon">
-                <i className="fas fa-star"></i>
+                <i className="fas fa-users"></i>
               </div>
               <div className="stat-content">
-                <h3>{stats.bestScore}</h3>
-                <p>Best Single Score</p>
-                {stats.bestScorePlayer && (
-                  <small>{stats.bestScorePlayer} ({stats.bestScoreYear})</small>
+                <h3>{stats.totalPlayers}</h3>
+                <p>Total Players</p>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon">
+                <i className="fas fa-trophy"></i>
+              </div>
+              <div className="stat-content">
+                <h3>{stats.bestAverage}</h3>
+                <p>Best Average</p>
+                {stats.bestAveragePlayer && (
+                  <small>{stats.bestAveragePlayer}</small>
                 )}
               </div>
             </div>
-          )}
+            {stats.bestScore && (
+              <div className="stat-card">
+                <div className="stat-icon">
+                  <i className="fas fa-star"></i>
+                </div>
+                <div className="stat-content">
+                  <h3>{stats.bestScore}</h3>
+                  <p>Best Single Score</p>
+                  {stats.bestScorePlayer && (
+                    <small>{stats.bestScorePlayer} ({stats.bestScoreYear})</small>
+                  )}
+                </div>
+              </div>
+            )}
 
-          <div className="stat-card">
-            <div className="stat-icon">
-              <i className="fas fa-map-marker-alt"></i>
-            </div>
-            <div className="stat-content">
-              <h3>{stats.totalTrips}</h3>
-              <p>Total Trips</p>
+            <div className="stat-card">
+              <div className="stat-icon">
+                <i className="fas fa-map-marker-alt"></i>
+              </div>
+              <div className="stat-content">
+                <h3>{stats.totalTrips}</h3>
+                <p>Total Trips</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Tabbed Content */}
         <TabbedContainer
@@ -302,7 +320,28 @@ export default function Home() {
             {
               id: 'recent-trips',
               label: 'Trips',
-              content: sortedTrips.length > 0 ? (
+              content: isLoading ? (
+                <div className="recent-trips-section">
+                  <div className="trips-grid">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <div key={`trip-skeleton-${index}`} className="trip-card skeleton-card">
+                        <div className="trip-photo-thumbnail skeleton-block"></div>
+                        <div className="trip-header">
+                          <div className="skeleton-line skeleton-line-md"></div>
+                          <div className="trip-header-right">
+                            <div className="skeleton-pill"></div>
+                            <div className="skeleton-circle"></div>
+                          </div>
+                        </div>
+                        <div className="trip-details">
+                          <div className="skeleton-line skeleton-line-sm"></div>
+                          <div className="skeleton-line skeleton-line-sm"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : sortedTrips.length > 0 ? (
                 <div className="recent-trips-section">
                   <div className="trips-grid">
                     {sortedTrips.map(trip => {

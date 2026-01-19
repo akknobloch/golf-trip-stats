@@ -278,6 +278,77 @@ body {
     max-width: 100%;
 }
 
+/* Skeleton loaders */
+.skeleton-card {
+    pointer-events: none;
+}
+
+.skeleton-block,
+.skeleton-line,
+.skeleton-pill,
+.skeleton-circle {
+    background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+.skeleton-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+}
+
+.skeleton-line {
+    height: 14px;
+    border-radius: 999px;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-line-lg {
+    width: 60%;
+    height: 24px;
+}
+
+.skeleton-line-md {
+    width: 55%;
+}
+
+.skeleton-line-sm {
+    width: 70%;
+}
+
+.skeleton-line-xs {
+    width: 40%;
+    height: 12px;
+}
+
+.skeleton-pill {
+    width: 58px;
+    height: 22px;
+    border-radius: 999px;
+}
+
+.skeleton-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.trip-photo-thumbnail.skeleton-block {
+    background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
 /* Admin styles */
 .admin-tabs {
     display: flex;
