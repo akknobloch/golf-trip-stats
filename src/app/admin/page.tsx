@@ -202,7 +202,7 @@ export const staticRounds: Round[] = ${JSON.stringify(rounds, null, 2)}
         throw new Error(result.error || 'Failed to save data')
       }
     } catch (error) {
-      setEditorError(`Save error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setEditorError(`Save error: ${error instanceof Error ? error.message : 'Unknown error'}. Data editing must happen in localhost (development mode).`)
     }
   }
 
@@ -421,7 +421,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
       }
     } catch (error) {
       setToast({
-        message: `Save error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Save error: ${error instanceof Error ? error.message : 'Unknown error'}. Data editing must happen in localhost (development mode).`,
         type: 'error',
         isVisible: true
       })
