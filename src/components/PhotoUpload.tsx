@@ -51,15 +51,11 @@ export default function PhotoUpload({ onPhotosAdded, existingPhotos = [], classN
       const newPhotos: TripPhoto[] = []
 
       for (const file of imageFiles) {
-        // For now, we'll create a data URL as a placeholder
-        // In a real app, you'd upload to a cloud service like AWS S3, Cloudinary, etc.
-        const photoUrl = await createDataURL(file)
         const thumbnailUrl = await createThumbnail(file)
         
         const photo: TripPhoto = {
           id: `photo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          url: photoUrl,
-          thumbnailUrl: thumbnailUrl,
+          url: thumbnailUrl,
           caption: file.name.replace(/\.[^/.]+$/, ''), // Remove file extension for caption
           date: new Date().toISOString()
         }
@@ -74,15 +70,6 @@ export default function PhotoUpload({ onPhotosAdded, existingPhotos = [], classN
     } finally {
       setUploading(false)
     }
-  }
-
-  const createDataURL = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
   }
 
   const createThumbnail = (file: File): Promise<string> => {

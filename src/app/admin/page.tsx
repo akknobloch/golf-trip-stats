@@ -333,21 +333,51 @@ player2,trip1,course1,78,2024-06-15,2024,Personal best`
   }
 
   // Inline editing functions
+  const normalizeTripPhotosForSave = (trip: Trip): Trip => {
+    if (!trip.photos || trip.photos.length === 0) {
+      return trip
+    }
+
+    const photos = trip.photos.map(photo => {
+      const normalized = { ...photo }
+      const hasDataUrl = typeof normalized.url === 'string' && normalized.url.startsWith('data:')
+      const hasThumbnail = typeof normalized.thumbnailUrl === 'string' && normalized.thumbnailUrl.length > 0
+
+      if (hasDataUrl && hasThumbnail) {
+        normalized.url = normalized.thumbnailUrl as string
+      }
+
+      if (normalized.thumbnailUrl === normalized.url) {
+        normalized.thumbnailUrl = undefined
+      }
+
+      return normalized
+    })
+
+    return { ...trip, photos }
+  }
+
   const saveAllData = async (newData: { players: Player[], courses: Course[], trips: Trip[], rounds: Round[] }) => {
     try {
+      const sanitizedTrips = newData.trips.map(normalizeTripPhotosForSave)
+      const sanitizedData = {
+        ...newData,
+        trips: sanitizedTrips
+      }
+
       const content = `import { Player, Course, Trip, Round } from '@/lib/types'
 
 // Static data for public deployment
 // This data will be embedded in the application and served statically
 // Update this file when you want to update the public data
 
-export const staticPlayers: Player[] = ${JSON.stringify(newData.players, null, 2)}
+export const staticPlayers: Player[] = ${JSON.stringify(sanitizedData.players, null, 2)}
 
-export const staticCourses: Course[] = ${JSON.stringify(newData.courses, null, 2)}
+export const staticCourses: Course[] = ${JSON.stringify(sanitizedData.courses, null, 2)}
 
-export const staticTrips: Trip[] = ${JSON.stringify(newData.trips, null, 2)}
+export const staticTrips: Trip[] = ${JSON.stringify(sanitizedData.trips, null, 2)}
 
-export const staticRounds: Round[] = ${JSON.stringify(newData.rounds, null, 2)}
+export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null, 2)}
 `
 
       const response = await fetch('/api/admin/save-data', {
@@ -357,7 +387,7 @@ export const staticRounds: Round[] = ${JSON.stringify(newData.rounds, null, 2)}
         },
         body: JSON.stringify({
           content,
-          data: newData
+          data: sanitizedData
         })
       })
 
@@ -375,10 +405,10 @@ export const staticRounds: Round[] = ${JSON.stringify(newData.rounds, null, 2)}
         })
         
         // Update local state
-        setPlayers(newData.players)
-        setCourses(newData.courses)
-        setTrips(newData.trips)
-        setRounds(newData.rounds)
+        setPlayers(sanitizedData.players)
+        setCourses(sanitizedData.courses)
+        setTrips(sanitizedData.trips)
+        setRounds(sanitizedData.rounds)
         
         // Clear editing states
         setEditingPlayer(null)
@@ -1173,4 +1203,3 @@ export const staticRounds: Round[] = ${JSON.stringify(newData.rounds, null, 2)}
     </div>
   )
 }
-
