@@ -7,12 +7,13 @@ import PhotoUpload from './PhotoUpload'
 interface TripEditFormProps {
   trip?: Trip
   players: Player[]
+  trips?: Trip[]
   onSave: (tripData: Omit<Trip, 'id'>) => void
   onCancel: () => void
   isEditing?: boolean
 }
 
-export default function TripEditForm({ trip, players, onSave, onCancel, isEditing = false }: TripEditFormProps) {
+export default function TripEditForm({ trip, players, trips = [], onSave, onCancel, isEditing = false }: TripEditFormProps) {
   const [formData, setFormData] = useState({
     startDate: '',
     endDate: '',
@@ -77,6 +78,10 @@ export default function TripEditForm({ trip, players, onSave, onCancel, isEditin
     }))
   }
 
+  const previousLocations = Array.from(
+    new Set(trips.map(existingTrip => existingTrip.location.trim()).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b))
+
   return (
     <div className="edit-form-overlay">
       <div className="edit-form">
@@ -121,7 +126,13 @@ export default function TripEditForm({ trip, players, onSave, onCancel, isEditin
               onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
               required
               placeholder="Enter trip location"
+              list="trip-location-options"
             />
+            <datalist id="trip-location-options">
+              {previousLocations.map(location => (
+                <option key={location} value={location} />
+              ))}
+            </datalist>
           </div>
 
           <div className="form-group">
@@ -213,5 +224,4 @@ export default function TripEditForm({ trip, players, onSave, onCancel, isEditin
     </div>
   )
 }
-
 

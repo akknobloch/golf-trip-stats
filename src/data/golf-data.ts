@@ -270,6 +270,34 @@ export const staticPlayers: Player[] = [
     "averageScore": 0,
     "totalTrips": 0,
     "id": "1756245292015"
+  },
+  {
+    "id": "1768846383521_jrfpa11",
+    "name": "Colin Hodel",
+    "yearsPlayed": 0,
+    "averageScore": 0,
+    "totalTrips": 0
+  },
+  {
+    "id": "1768846383521_g7vcoif",
+    "name": "Blake Streitmatter",
+    "yearsPlayed": 0,
+    "averageScore": 0,
+    "totalTrips": 0
+  },
+  {
+    "id": "1768846383521_t9e15zy",
+    "name": "Michel Elsasser",
+    "yearsPlayed": 0,
+    "averageScore": 0,
+    "totalTrips": 0
+  },
+  {
+    "id": "1768846383521_hhprfig",
+    "name": "Brendan Streitmatter",
+    "yearsPlayed": 0,
+    "averageScore": 0,
+    "totalTrips": 0
   }
 ]
 
@@ -385,9 +413,23 @@ export const staticCourses: Course[] = [
   {
     "id": "17555252748071c2",
     "name": "Bear Creek Valley Golf Club",
-    "location": "Imported Location",
+    "location": "Osage Beach, MO",
     "par": 72,
     "timesPlayed": 0
+  },
+  {
+    "name": "Old Kinderhook Golf Club",
+    "location": "Camdenton, MO",
+    "par": 71,
+    "timesPlayed": 0,
+    "id": "1768845724187"
+  },
+  {
+    "name": "Osage National Golf Club",
+    "location": "Lake Ozark, MO",
+    "par": 72,
+    "timesPlayed": 0,
+    "id": "1768845772118"
   }
 ]
 
@@ -616,6 +658,18 @@ export const staticTrips: Trip[] = [
         "date": "2025-08-30T02:32:29.003Z"
       }
     ]
+  },
+  {
+    "startDate": "2025-09-26",
+    "endDate": "2025-09-28",
+    "location": "Ozarks, MO",
+    "description": "",
+    "weather": "",
+    "notes": "",
+    "championPlayerId": "1755398345513",
+    "attendees": [],
+    "photos": [],
+    "id": "1768845836360"
   }
 ]
 
@@ -3439,5 +3493,410 @@ export const staticRounds: Round[] = [
     "date": "2015-06-03",
     "year": 2015,
     "notes": "Round 3"
+  },
+  {
+    "id": "1768846383521_l3k6xqh",
+    "playerId": "175535565261524",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 82,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_bbv4xsy",
+    "playerId": "175535565261524",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 87,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_2v25lyu",
+    "playerId": "175535565261524",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 78,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_zblthqg",
+    "playerId": "1755398345513",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 83,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_t61yip7",
+    "playerId": "1755398345513",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 83,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_nifq6c3",
+    "playerId": "1755398345513",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 77,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_pvp6urp",
+    "playerId": "175535565261518",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 86,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_z5togxv",
+    "playerId": "175535565261518",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 79,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_4lt41lj",
+    "playerId": "175535565261518",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 90,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_in7uety",
+    "playerId": "17553556526152",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 79,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_4flon41",
+    "playerId": "17553556526152",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 81,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_u2qpc3e",
+    "playerId": "17553556526152",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 83,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_j5rtwun",
+    "playerId": "17553556526153",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 83,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_ycqzxb1",
+    "playerId": "17553556526153",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 80,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_4hmj4q0",
+    "playerId": "17553556526153",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 82,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_uf0fg7y",
+    "playerId": "175535565261519",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 88,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_gblguh8",
+    "playerId": "175535565261519",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 88,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_fbda3od",
+    "playerId": "175535565261519",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 77,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_6h2fivk",
+    "playerId": "17554599416443p",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 91,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_061vp6t",
+    "playerId": "17554599416443p",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 86,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_ulkplh6",
+    "playerId": "17554599416443p",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 86,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_pdvwjd6",
+    "playerId": "17554599416447p",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 91,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_8cxtyjt",
+    "playerId": "17554599416447p",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 90,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_ghvohjc",
+    "playerId": "17554599416447p",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 91,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_rtk5ge3",
+    "playerId": "1768846383521_jrfpa11",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 98,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_i1je7fe",
+    "playerId": "1768846383521_jrfpa11",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 90,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_tsrxmhh",
+    "playerId": "1768846383521_jrfpa11",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 92,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_z2gc3j5",
+    "playerId": "17553556526151",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 98,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_2f2oixc",
+    "playerId": "17553556526151",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 85,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_1xl8p8v",
+    "playerId": "17553556526151",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 89,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_dcxgu98",
+    "playerId": "175535565261510",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 100,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_94r0k4r",
+    "playerId": "175535565261510",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 113,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_3qtsonw",
+    "playerId": "175535565261510",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 115,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_5i707da",
+    "playerId": "175535565261521",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 102,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_px05wja",
+    "playerId": "175535565261521",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 92,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_to1n94c",
+    "playerId": "175535565261521",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 100,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_thm8vul",
+    "playerId": "1768846383521_g7vcoif",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 108,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_h0jz5qf",
+    "playerId": "1768846383521_g7vcoif",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 104,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_bonhob8",
+    "playerId": "1768846383521_g7vcoif",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 110,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_k2htwhr",
+    "playerId": "1768846383521_t9e15zy",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 118,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_dul71rd",
+    "playerId": "1768846383521_t9e15zy",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 130,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_udf1xcv",
+    "playerId": "1768846383521_t9e15zy",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 118,
+    "date": "2025-09-28",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_ov8rmh0",
+    "playerId": "1768846383521_hhprfig",
+    "tripId": "1768845836360",
+    "courseId": "1768845772118",
+    "score": 126,
+    "date": "2025-09-26",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_iwscdug",
+    "playerId": "1768846383521_hhprfig",
+    "tripId": "1768845836360",
+    "courseId": "17555252748071c2",
+    "score": 118,
+    "date": "2025-09-27",
+    "year": 2025
+  },
+  {
+    "id": "1768846383521_2j8cl23",
+    "playerId": "1768846383521_hhprfig",
+    "tripId": "1768845836360",
+    "courseId": "1768845724187",
+    "score": 125,
+    "date": "2025-09-28",
+    "year": 2025
   }
 ]

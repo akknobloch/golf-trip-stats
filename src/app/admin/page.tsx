@@ -48,6 +48,15 @@ export default function Admin() {
   const [editingTrip, setEditingTrip] = useState<string | null>(null)
   const [editingRound, setEditingRound] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState<'player' | 'course' | 'trip' | 'round' | null>(null)
+  const [roundImportText, setRoundImportText] = useState(
+    'Year\tName\tRound 1\tRound 2\tRound 3\n2025\tNate Hartman\t82\t87\t78\n2025\tAustin Knobloch\t83\t83\t77\n2025\tDylan Knobloch\t86\t79\t90'
+  )
+  const [roundImportTripName, setRoundImportTripName] = useState('2025 Ozarks, MO')
+  const [roundImportRounds, setRoundImportRounds] = useState([
+    { courseName: 'Osage National', date: '2025-09-26' },
+    { courseName: 'Bear Creek Valley', date: '2025-09-27' },
+    { courseName: 'Old Kinderhook', date: '2025-09-28' }
+  ])
 
   useEffect(() => {
     // Check authentication in production
@@ -591,6 +600,150 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
     }
   }
 
+  const normalizeTripName = (name: string) => {
+    return name.trim().replace(/[.]+$/g, '').replace(/\s+/g, ' ').toLowerCase()
+  }
+
+  const createId = () => `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+
+  const importRoundsFromTsv = () => {
+    const lines = roundImportText.split(/\r?\n/).map(line => line.trim()).filter(Boolean)
+    if (lines.length < 2) {
+      setToast({
+        message: 'Import failed: Please provide a header row and at least one data row.',
+        type: 'error',
+        isVisible: true
+      })
+      return
+    }
+
+    const headerCells = lines[0].split('\t').map(cell => cell.trim().toLowerCase())
+    const yearIndex = headerCells.indexOf('year')
+    const nameIndex = headerCells.indexOf('name')
+    const roundIndexes = [
+      headerCells.indexOf('round 1'),
+      headerCells.indexOf('round 2'),
+      headerCells.indexOf('round 3')
+    ]
+
+    if (yearIndex === -1 || nameIndex === -1 || roundIndexes.some(index => index === -1)) {
+      setToast({
+        message: 'Import failed: Expected columns "Year", "Name", "Round 1", "Round 2", "Round 3".',
+        type: 'error',
+        isVisible: true
+      })
+      return
+    }
+
+    const normalizedTripName = normalizeTripName(roundImportTripName)
+    const matchedTrip = trips.find(trip => {
+      const tripName = `${new Date(trip.startDate).getFullYear()} ${trip.location}`
+      return normalizeTripName(tripName) === normalizedTripName
+    })
+
+    if (!matchedTrip) {
+      setToast({
+        message: `Import failed: Could not find trip "${roundImportTripName}".`,
+        type: 'error',
+        isVisible: true
+      })
+      return
+    }
+
+    const courseByName = new Map(courses.map(course => [course.name.trim(), course]))
+    const roundCourseIds = roundImportRounds.map(roundConfig => {
+      const course = courseByName.get(roundConfig.courseName.trim())
+      return course?.id || null
+    })
+
+    const missingCourses = roundImportRounds
+      .map((roundConfig, index) => ({ name: roundConfig.courseName, index }))
+      .filter((_, index) => !roundCourseIds[index])
+
+    if (missingCourses.length > 0) {
+      setToast({
+        message: `Import failed: Missing courses: ${missingCourses.map(course => course.name).join(', ')}.`,
+        type: 'error',
+        isVisible: true
+      })
+      return
+    }
+
+    const playerByName = new Map(players.map(player => [player.name.trim(), player]))
+    const newPlayers: Player[] = []
+    const newRounds: Round[] = []
+    let skippedScores = 0
+
+    for (const line of lines.slice(1)) {
+      const cells = line.split('\t').map(cell => cell.trim())
+      const playerName = cells[nameIndex] || ''
+      const yearValue = parseInt(cells[yearIndex], 10)
+
+      if (!playerName) {
+        continue
+      }
+
+      let player = playerByName.get(playerName)
+      if (!player) {
+        player = {
+          id: createId(),
+          name: playerName,
+          yearsPlayed: 0,
+          averageScore: 0,
+          totalTrips: 0
+        }
+        newPlayers.push(player)
+        playerByName.set(playerName, player)
+      }
+
+      roundIndexes.forEach((roundIndex, roundNumberIndex) => {
+        const scoreValue = parseInt(cells[roundIndex] || '', 10)
+        if (!Number.isFinite(scoreValue) || scoreValue <= 0) {
+          skippedScores += 1
+          return
+        }
+
+        const roundConfig = roundImportRounds[roundNumberIndex]
+        const courseId = roundCourseIds[roundNumberIndex] as string
+        const roundDate = roundConfig?.date || matchedTrip.startDate
+        const roundYear = Number.isFinite(yearValue) ? yearValue : new Date(roundDate).getFullYear()
+
+        newRounds.push({
+          id: createId(),
+          playerId: player!.id,
+          tripId: matchedTrip.id,
+          courseId,
+          score: scoreValue,
+          date: roundDate,
+          year: roundYear
+        })
+      })
+    }
+
+    if (newRounds.length === 0) {
+      setToast({
+        message: 'Import failed: No valid rounds found.',
+        type: 'error',
+        isVisible: true
+      })
+      return
+    }
+
+    saveAllData({
+      players: [...players, ...newPlayers],
+      courses,
+      trips,
+      rounds: [...rounds, ...newRounds]
+    })
+
+    setToast({
+      message: `Imported ${newRounds.length} rounds${newPlayers.length > 0 ? ` and created ${newPlayers.length} players` : ''}.` +
+        `${skippedScores > 0 ? ` Skipped ${skippedScores} empty scores.` : ''}`,
+      type: 'success',
+      isVisible: true
+    })
+  }
+
   return (
     <div className="container">
       <Toast
@@ -881,7 +1034,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
               </button>
             </div>
             <div className="admin-grid">
-              {trips.map(trip => {
+              {[...trips].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()).map(trip => {
                 const tripRounds = rounds.filter(round => round.tripId === trip.id)
                 const tripPlayersWithScores = new Set(tripRounds.map(round => round.playerId))
                 const tripCourses = new Set(tripRounds.map(round => round.courseId))
@@ -945,6 +1098,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
             {showAddForm === 'trip' && (
               <TripEditForm
                 players={players}
+                trips={trips}
                 onSave={addTrip}
                 onCancel={() => setShowAddForm(null)}
                 isEditing={false}
@@ -956,6 +1110,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
               <TripEditForm
                 trip={trips.find(t => t.id === editingTrip)}
                 players={players}
+                trips={trips}
                 onSave={(tripData: Omit<Trip, 'id'>) => {
                   updateTrip(editingTrip, tripData)
                 }}
@@ -977,6 +1132,67 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
               >
                 <i className="fas fa-plus"></i> Add Round
               </button>
+            </div>
+
+            <div className="info-box">
+              <h3>📥 Import Rounds (TSV)</h3>
+              <p>Paste Excel data with columns: <strong>Year</strong>, <strong>Name</strong>, <strong>Round 1</strong>, <strong>Round 2</strong>, <strong>Round 3</strong>.</p>
+              <div className="form-group">
+                <label htmlFor="roundImportTripName">Trip Name</label>
+                <input
+                  id="roundImportTripName"
+                  type="text"
+                  value={roundImportTripName}
+                  onChange={(e) => setRoundImportTripName(e.target.value)}
+                  placeholder="e.g., 2025 Ozarks, MO"
+                />
+              </div>
+              <div className="form-row">
+                {roundImportRounds.map((roundConfig, index) => (
+                  <div key={`round-import-${index}`} className="form-group">
+                    <label htmlFor={`roundImportCourse${index}`}>Round {index + 1} Course</label>
+                    <input
+                      id={`roundImportCourse${index}`}
+                      type="text"
+                      value={roundConfig.courseName}
+                      onChange={(e) => {
+                        const updated = [...roundImportRounds]
+                        updated[index] = { ...updated[index], courseName: e.target.value }
+                        setRoundImportRounds(updated)
+                      }}
+                    />
+                    <label htmlFor={`roundImportDate${index}`}>Round {index + 1} Date</label>
+                    <input
+                      id={`roundImportDate${index}`}
+                      type="date"
+                      value={roundConfig.date}
+                      onChange={(e) => {
+                        const updated = [...roundImportRounds]
+                        updated[index] = { ...updated[index], date: e.target.value }
+                        setRoundImportRounds(updated)
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="form-group">
+                <label htmlFor="roundImportText">Paste TSV</label>
+                <textarea
+                  id="roundImportText"
+                  value={roundImportText}
+                  onChange={(e) => setRoundImportText(e.target.value)}
+                  rows={6}
+                  placeholder="Year\tName\tRound 1\tRound 2\tRound 3"
+                />
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn btn-primary" onClick={importRoundsFromTsv}>
+                  Import Rounds
+                </button>
+              </div>
+              <small className="form-help">
+                Trips and courses must already exist. Missing player names will be created.
+              </small>
             </div>
             <div className="admin-grid">
               {rounds.map(round => {
