@@ -63,6 +63,7 @@ export default function PlayerDetails() {
   const [tripStats, setTripStats] = useState<PlayerTripStats[]>([])
   const [courseStats, setCourseStats] = useState<PlayerCourseStats[]>([])
   const [yearStats, setYearStats] = useState<{ [year: number]: { rounds: number, average: number, best: number } }>({})
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // Scroll to top when component mounts
@@ -88,6 +89,8 @@ export default function PlayerDetails() {
         setCourses([])
         setTrips([])
         setRounds([])
+      } finally {
+        setLoading(false)
       }
     }
     
@@ -204,6 +207,14 @@ export default function PlayerDetails() {
 
     setYearStats(yearStatsMap)
   }, [player, courses, trips, rounds, playerId])
+
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="loading">Loading player details...</div>
+      </div>
+    )
+  }
 
   if (!player) {
     return (

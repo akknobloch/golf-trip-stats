@@ -63,6 +63,7 @@ export default function TripDetails() {
   const [tripRounds, setTripRounds] = useState<TripRound[]>([])
   const [playerStats, setPlayerStats] = useState<PlayerTripStats[]>([])
   const [champion, setChampion] = useState<PlayerTripStats | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // Scroll to top when component mounts
@@ -96,6 +97,8 @@ export default function TripDetails() {
         setCourses([])
         setRounds([])
         setTrip(null)
+      } finally {
+        setLoading(false)
       }
     }
     
@@ -190,6 +193,14 @@ export default function TripDetails() {
 
   // Total players on the trip (with scores + attendees without scores)
   const totalTripPlayers = playerStats.length + attendeesWithoutScores.length
+
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="loading">Loading trip details...</div>
+      </div>
+    )
+  }
 
   if (!trip) {
     return (
