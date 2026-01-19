@@ -11,6 +11,7 @@
     "vercel-dev": "next dev"
   },
   "dependencies": {
+    "@tanstack/react-table": "^8.11.7",
     "next": "14.0.4",
     "react": "^18",
     "react-dom": "^18",
@@ -28,5 +29,4 @@
     "npm": ">=8.0.0"
   }
 }
-
 

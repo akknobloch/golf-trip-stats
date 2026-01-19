@@ -94,7 +94,12 @@ export default function PlayerCard({ player, rounds, trips, courses, onViewDetai
               return (
                 <div key={round.id} className="recent-round-compact-item">
                   <span className="recent-round-compact-score">{round.score}</span>
-                  <span className="recent-round-compact-course">{course?.name || 'Unknown'}</span>
+                  <span
+                    className="recent-round-compact-course"
+                    title={course?.name || 'Unknown'}
+                  >
+                    {course?.name || 'Unknown'}
+                  </span>
                   <span className={`recent-round-compact-par ${toPar <= 0 ? 'under-par' : 'over-par'}`}>
                     {toParDisplay}
                   </span>

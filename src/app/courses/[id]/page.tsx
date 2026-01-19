@@ -112,7 +112,7 @@ export default function CourseDetails() {
               <div className="highlight-content">
                 <h3>{courseStats.averageScore}</h3>
                 <p>Average Score</p>
-                <small>All players combined</small>
+                <small title="All players combined">All players combined</small>
               </div>
             </div>
 
@@ -124,7 +124,11 @@ export default function CourseDetails() {
                 <h3>{courseStats.bestScore}</h3>
                 <p>Best Score</p>
                 {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.bestScore) && (
-                  <small>
+                  <small
+                    title={
+                      courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.bestScore)?.playerName
+                    }
+                  >
                     {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.bestScore)?.playerName}
                   </small>
                 )}
@@ -139,7 +143,11 @@ export default function CourseDetails() {
                 <h3>{courseStats.worstScore}</h3>
                 <p>Worst Score</p>
                 {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.worstScore) && (
-                  <small>
+                  <small
+                    title={
+                      courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.worstScore)?.playerName
+                    }
+                  >
                     {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.worstScore)?.playerName}
                   </small>
                 )}
@@ -166,7 +174,9 @@ export default function CourseDetails() {
                     <Link key={tripIdStr} href={`/trips/${tripIdStr}`} className="trip-card-link">
                       <div className="trip-card">
                         <div className="trip-header">
-                          <h3>{trip?.location || 'Unknown Trip'}</h3>
+                          <h3 title={trip?.location || 'Unknown Trip'}>
+                            {trip?.location || 'Unknown Trip'}
+                          </h3>
                           <div className="trip-header-right">
                             <span className="trip-year">{tripYear}</span>
                             <div className="trip-actions">

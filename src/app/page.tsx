@@ -320,7 +320,7 @@ export default function Home() {
                 <h3>{stats.bestAverage}</h3>
                 <p>Best Average</p>
                 {stats.bestAveragePlayer && (
-                  <small>{stats.bestAveragePlayer}</small>
+                  <small title={stats.bestAveragePlayer}>{stats.bestAveragePlayer}</small>
                 )}
               </div>
             </div>
@@ -333,7 +333,9 @@ export default function Home() {
                   <h3>{stats.bestScore}</h3>
                   <p>Best Single Score</p>
                   {stats.bestScorePlayer && (
-                    <small>{stats.bestScorePlayer} ({stats.bestScoreYear})</small>
+                    <small title={`${stats.bestScorePlayer} (${stats.bestScoreYear})`}>
+                      {stats.bestScorePlayer} ({stats.bestScoreYear})
+                    </small>
                   )}
                 </div>
               </div>
@@ -432,7 +434,7 @@ export default function Home() {
                             </div>
                             
                             <div className="trip-header">
-                              <h3>{trip.location}</h3>
+                            <h3 title={trip.location}>{trip.location}</h3>
                               <div className="trip-header-right">
                                 <span className="trip-year">{new Date(trip.startDate).getFullYear()}</span>
                                 <div className="trip-actions">
@@ -545,7 +547,7 @@ export default function Home() {
                       <Link key={course.id} href={`/courses/${course.id}`} className="course-card-link">
                         <ParallaxCard className="course-card" intensity={8} rotationIntensity={2}>
                           <div className="course-header">
-                            <h3>{course.name}</h3>
+                            <h3 title={course.name}>{course.name}</h3>
                             <div className="course-header-right">
                               <span className="course-par">Par {course.par}</span>
                               <div className="course-actions">

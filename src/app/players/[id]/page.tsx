@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { Player, Course, Trip, Round } from '@/lib/types'
 import { calculatePlayerStats } from '@/lib/utils'
 import { getData } from '../../../lib/data'
+import SortableTable from '@/components/SortableTable'
+import { type ColumnDef } from '@tanstack/react-table'
 
 
 
@@ -33,6 +35,18 @@ interface PlayerCourseStats {
   bestScore: number
   worstScore: number
   timesPlayed: number
+}
+
+interface PlayerRoundTableRow {
+  id: string
+  dateValue: number
+  dateLabel: string
+  courseName: string
+  tripName: string
+  score: number
+  toPar: number
+  toParDisplay: string
+  toParClassName: string
 }
 
 export default function PlayerDetails() {
@@ -209,6 +223,54 @@ export default function PlayerDetails() {
   const worstScore = Math.max(...playerRounds.map(pr => pr.round.score))
   const bestScoreRound = playerRounds.find(pr => pr.round.score === bestScore)
   const championshipCount = trips.filter(trip => trip.championPlayerId === playerId).length
+  const roundsTableData: PlayerRoundTableRow[] = playerRounds.map(({ round, course, trip }) => {
+    const toPar = round.score - course.par
+    const toParDisplay = toPar > 0 ? `+${toPar}` : toPar.toString()
+    const toParClassName = toPar <= 0 ? 'under-par' : 'over-par'
+
+    return {
+      id: round.id,
+      dateValue: new Date(round.date).getTime(),
+      dateLabel: new Date(round.date).toLocaleDateString(),
+      courseName: course.name,
+      tripName: `${new Date(trip.startDate).getFullYear()} ${trip.location}`,
+      score: round.score,
+      toPar,
+      toParDisplay,
+      toParClassName
+    }
+  })
+  const roundsColumns: ColumnDef<PlayerRoundTableRow>[] = [
+    {
+      accessorKey: 'dateValue',
+      header: 'Date',
+      cell: info => info.row.original.dateLabel,
+      meta: { headerClassName: 'round-col', cellClassName: 'round-col' }
+    },
+    {
+      id: 'courseTrip',
+      header: 'Course & Trip',
+      accessorFn: row => `${row.courseName} ${row.tripName}`,
+      cell: info => (
+        <div className="course-trip-col">
+          <div className="course-name">{info.row.original.courseName}</div>
+          <div className="trip-info">{info.row.original.tripName}</div>
+        </div>
+      ),
+      meta: { headerClassName: 'round-col', cellClassName: 'round-col' }
+    },
+    {
+      accessorKey: 'score',
+      header: 'Score',
+      meta: { headerClassName: 'round-col', cellClassName: 'round-col' }
+    },
+    {
+      accessorKey: 'toPar',
+      header: 'To Par',
+      cell: info => info.row.original.toParDisplay,
+      meta: { headerClassName: 'round-col', cellClassName: 'round-col' }
+    }
+  ]
 
   return (
     <div className="container">
@@ -283,7 +345,9 @@ export default function PlayerDetails() {
                 <h3>{bestScore}</h3>
                 <p>Best Round</p>
                 {bestScoreRound && (
-                  <small>{bestScoreRound.course.name} ({bestScoreRound.round.year})</small>
+                  <small title={`${bestScoreRound.course.name} (${bestScoreRound.round.year})`}>
+                    {bestScoreRound.course.name} ({bestScoreRound.round.year})
+                  </small>
                 )}
               </div>
             </div>
@@ -335,32 +399,18 @@ export default function PlayerDetails() {
               </div>
             </div>
             
-            <div className="recent-rounds-table">
-              <div className="rounds-header">
-                <div className="round-col">Date</div>
-                <div className="round-col">Course & Trip</div>
-                <div className="round-col">Score</div>
-                <div className="round-col">To Par</div>
-              </div>
-              {playerRounds.map(({ round, course, trip }) => {
-                const toPar = round.score - course.par
-                const toParDisplay = toPar > 0 ? `+${toPar}` : toPar.toString()
-                
-                return (
-                  <div key={round.id} className="round-row">
-                    <div className="round-col">{new Date(round.date).toLocaleDateString()}</div>
-                    <div className="round-col course-trip-col">
-                      <div className="course-name">{course.name}</div>
-                      <div className="trip-info">{new Date(trip.startDate).getFullYear()} {trip.location}</div>
-                    </div>
-                    <div className="round-col">{round.score}</div>
-                    <div className={`round-col ${toPar <= 0 ? 'under-par' : 'over-par'}`}>
-                      {toParDisplay}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            <SortableTable
+              data={roundsTableData}
+              columns={roundsColumns}
+              tableClassName="recent-rounds-table"
+              headerRowClassName="rounds-header"
+              rowClassName="round-row"
+              headerCellClassName="round-col"
+              cellClassName="round-col"
+              getCellClassName={cell => (
+                cell.column.id === 'toPar' ? cell.row.original.toParClassName : ''
+              )}
+            />
           </div>
         </div>
 

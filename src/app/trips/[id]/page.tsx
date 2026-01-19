@@ -7,6 +7,8 @@ import { Player, Course, Trip, Round } from '@/lib/types'
 import { formatDate, getDateValue, calculateTripDuration } from '@/lib/utils'
 import { getData } from '../../../lib/data'
 import PhotoGallery from '@/components/PhotoGallery'
+import SortableTable from '@/components/SortableTable'
+import { type ColumnDef } from '@tanstack/react-table'
 
 
 
@@ -27,6 +29,26 @@ interface PlayerTripStats {
   round1Score?: number
   round2Score?: number
   round3Score?: number
+}
+
+interface PlayerRankRow {
+  playerId: string
+  playerName: string
+  round1Score: number | null
+  round2Score: number | null
+  round3Score: number | null
+  averageScore: number
+}
+
+interface CourseRoundRow {
+  id: string
+  dateValue: number
+  dateLabel: string
+  playerName: string
+  score: number
+  toPar: number
+  toParDisplay: string
+  toParClassName: string
 }
 
 export default function TripDetails() {
@@ -192,6 +214,84 @@ export default function TripDetails() {
   const uniqueCourses = Array.from(new Set(tripRounds.map(tr => tr.course.id)))
     .map(courseId => courses.find(c => c.id === courseId))
     .filter((course): course is Course => course !== undefined)
+  const rankingsTableData: PlayerRankRow[] = playerStats.map(playerStat => ({
+    playerId: playerStat.player.id,
+    playerName: playerStat.player.name,
+    round1Score: playerStat.round1Score ?? null,
+    round2Score: playerStat.round2Score ?? null,
+    round3Score: playerStat.round3Score ?? null,
+    averageScore: playerStat.averageScore
+  }))
+  const rankingsColumns: ColumnDef<PlayerRankRow>[] = [
+    {
+      id: 'rank',
+      header: 'Rank',
+      enableSorting: false,
+      cell: info => {
+        const rankIndex = info.row.index
+        if (rankIndex === 0) return '🥇'
+        if (rankIndex === 1) return '🥈'
+        if (rankIndex === 2) return '🥉'
+        return `#${rankIndex + 1}`
+      },
+      meta: { headerClassName: 'rank-col', cellClassName: 'rank-col' }
+    },
+    {
+      accessorKey: 'playerName',
+      header: 'Player',
+      meta: { headerClassName: 'player-col', cellClassName: 'player-col' }
+    },
+    {
+      id: 'round1',
+      header: 'Round 1',
+      accessorFn: row => row.round1Score ?? Number.MAX_SAFE_INTEGER,
+      cell: info => info.row.original.round1Score ?? '-',
+      meta: { headerClassName: 'stat-col', cellClassName: 'stat-col' }
+    },
+    {
+      id: 'round2',
+      header: 'Round 2',
+      accessorFn: row => row.round2Score ?? Number.MAX_SAFE_INTEGER,
+      cell: info => info.row.original.round2Score ?? '-',
+      meta: { headerClassName: 'stat-col', cellClassName: 'stat-col' }
+    },
+    {
+      id: 'round3',
+      header: 'Round 3',
+      accessorFn: row => row.round3Score ?? Number.MAX_SAFE_INTEGER,
+      cell: info => info.row.original.round3Score ?? '-',
+      meta: { headerClassName: 'stat-col', cellClassName: 'stat-col' }
+    },
+    {
+      accessorKey: 'averageScore',
+      header: 'Average',
+      meta: { headerClassName: 'stat-col', cellClassName: 'stat-col' }
+    }
+  ]
+  const courseRoundsColumns: ColumnDef<CourseRoundRow>[] = [
+    {
+      accessorKey: 'dateValue',
+      header: 'Date',
+      cell: info => info.row.original.dateLabel,
+      meta: { headerClassName: 'round-col', cellClassName: 'round-col' }
+    },
+    {
+      accessorKey: 'playerName',
+      header: 'Player',
+      meta: { headerClassName: 'round-col', cellClassName: 'round-col' }
+    },
+    {
+      accessorKey: 'score',
+      header: 'Score',
+      meta: { headerClassName: 'round-col', cellClassName: 'round-col' }
+    },
+    {
+      accessorKey: 'toPar',
+      header: 'To Par',
+      cell: info => info.row.original.toParDisplay,
+      meta: { headerClassName: 'round-col', cellClassName: 'round-col' }
+    }
+  ]
 
   return (
     <div className="container">
@@ -397,28 +497,14 @@ export default function TripDetails() {
             {/* Player Rankings */}
             <div className="player-rankings">
               <h2>Player Rankings</h2>
-              <div className="rankings-table">
-                <div className="rankings-header">
-                  <div className="rank-col">Rank</div>
-                  <div className="player-col">Player</div>
-                  <div className="stat-col">Round 1</div>
-                  <div className="stat-col">Round 2</div>
-                  <div className="stat-col">Round 3</div>
-                  <div className="stat-col">Average</div>
-                </div>
-                {playerStats.map((playerStat, index) => (
-                  <div key={playerStat.player.id} className={`rankings-row ${index === 0 ? 'champion-row' : ''}`}>
-                    <div className="rank-col">
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                    </div>
-                    <div className="player-col">{playerStat.player.name}</div>
-                    <div className="stat-col">{playerStat.round1Score || '-'}</div>
-                    <div className="stat-col">{playerStat.round2Score || '-'}</div>
-                    <div className="stat-col">{playerStat.round3Score || '-'}</div>
-                    <div className="stat-col">{playerStat.averageScore}</div>
-                  </div>
-                ))}
-              </div>
+              <SortableTable
+                data={rankingsTableData}
+                columns={rankingsColumns}
+                tableClassName="rankings-table"
+                headerRowClassName="rankings-header"
+                rowClassName="rankings-row"
+                getRowClassName={row => (row.index === 0 ? 'champion-row' : '')}
+              />
             </div>
 
             {/* Course Rounds */}
@@ -432,6 +518,24 @@ export default function TripDetails() {
                   worstScore: Math.max(...courseRounds.map(tr => tr.round.score)),
                   bestPlayer: courseRounds.find(tr => tr.round.score === Math.min(...courseRounds.map(tr => tr.round.score)))?.player.name
                 }
+                const courseRoundRows: CourseRoundRow[] = [...courseRounds]
+                  .sort((a, b) => a.round.score - b.round.score)
+                  .map(({ round, player }) => {
+                    const toPar = round.score - course.par
+                    const toParDisplay = toPar > 0 ? `+${toPar}` : toPar.toString()
+                    const toParClassName = toPar <= 0 ? 'under-par' : 'over-par'
+
+                    return {
+                      id: round.id,
+                      dateValue: getDateValue(round.date),
+                      dateLabel: formatDate(round.date),
+                      playerName: player.name,
+                      score: round.score,
+                      toPar,
+                      toParDisplay,
+                      toParClassName
+                    }
+                  })
 
                 return (
                   <div key={course.id} className="course-round-card">
@@ -457,31 +561,18 @@ export default function TripDetails() {
                       </div>
                     </div>
                     
-                    <div className="course-rounds-table">
-                      <div className="rounds-header">
-                        <div className="round-col">Date</div>
-                        <div className="round-col">Player</div>
-                        <div className="round-col">Score</div>
-                        <div className="round-col">To Par</div>
-                      </div>
-                      {courseRounds
-                        .sort((a, b) => a.round.score - b.round.score)
-                        .map(({ round, player }) => {
-                          const toPar = round.score - course.par
-                          const toParDisplay = toPar > 0 ? `+${toPar}` : toPar.toString()
-                          
-                          return (
-                            <div key={round.id} className="round-row">
-                              <div className="round-col">{formatDate(round.date)}</div>
-                              <div className="round-col">{player.name}</div>
-                              <div className="round-col">{round.score}</div>
-                              <div className={`round-col ${toPar <= 0 ? 'under-par' : 'over-par'}`}>
-                                {toParDisplay}
-                              </div>
-                            </div>
-                          )
-                        })}
-                    </div>
+                    <SortableTable
+                      data={courseRoundRows}
+                      columns={courseRoundsColumns}
+                      tableClassName="course-rounds-table"
+                      headerRowClassName="rounds-header"
+                      rowClassName="round-row"
+                      headerCellClassName="round-col"
+                      cellClassName="round-col"
+                      getCellClassName={cell => (
+                        cell.column.id === 'toPar' ? cell.row.original.toParClassName : ''
+                      )}
+                    />
                   </div>
                 )
               })}

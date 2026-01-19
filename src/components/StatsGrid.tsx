@@ -44,7 +44,9 @@ export default function StatsGrid({ stats }: StatsGridProps) {
             <h3>{stats.bestScore}</h3>
             <p>Best Single Score</p>
             {stats.bestScorePlayer && (
-              <small>{stats.bestScorePlayer} ({stats.bestScoreYear})</small>
+              <small title={`${stats.bestScorePlayer} (${stats.bestScoreYear})`}>
+                {stats.bestScorePlayer} ({stats.bestScoreYear})
+              </small>
             )}
           </div>
         </ParallaxCard>
