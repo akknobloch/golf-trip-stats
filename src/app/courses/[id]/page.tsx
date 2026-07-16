@@ -3,11 +3,25 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { Course, Round, Player, Trip } from '@/lib/types'
-import { calculateCourseStats } from '@/lib/utils'
+import { calculateCourseStats, getTripYear, indexById } from '@/lib/utils'
 import { getData } from '../../../lib/data'
 import Link from 'next/link'
 
-
+interface EnhancedCourseStats {
+  courseId: string
+  courseName: string
+  timesPlayed: number
+  averageScore: number
+  bestScore: number
+  bestPlayer: string
+  worstScore: number
+  worstPlayer: string
+  lastPlayed: number
+  yearsPlayed: number[]
+  totalRounds: number
+  uniquePlayers: number
+  roundsWithPlayers: Array<Round & { playerName: string; tripName: string }>
+}
 
 export default function CourseDetails() {
   const params = useParams()
@@ -17,7 +31,7 @@ export default function CourseDetails() {
   const [rounds, setRounds] = useState<Round[]>([])
   const [trips, setTrips] = useState<Trip[]>([])
   const [players, setPlayers] = useState<Player[]>([])
-  const [courseStats, setCourseStats] = useState<any>(null)
+  const [courseStats, setCourseStats] = useState<EnhancedCourseStats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -46,25 +60,27 @@ export default function CourseDetails() {
   }, [courseId])
 
   useEffect(() => {
-    if (course && rounds.length > 0) {
-      const stats = calculateCourseStats(course, rounds)
-      
-      // Get course-specific rounds and enhance with player names
-      const courseRounds = rounds.filter(round => round.courseId === course.id)
-      const enhancedStats = {
-        ...stats,
-        yearsPlayed: [...new Set(courseRounds.map(round => round.year))].sort((a, b) => b - a),
-        totalRounds: courseRounds.length,
-        uniquePlayers: [...new Set(courseRounds.map(round => round.playerId))].length,
-        roundsWithPlayers: courseRounds.map(round => ({
+    if (!course) return
+
+    const stats = calculateCourseStats(course, rounds)
+    const playersById = indexById(players)
+    const tripsById = indexById(trips)
+    const courseRounds = rounds.filter(round => round.courseId === course.id)
+
+    setCourseStats({
+      ...stats,
+      yearsPlayed: [...new Set(courseRounds.map(round => round.year))].sort((a, b) => b - a),
+      totalRounds: courseRounds.length,
+      uniquePlayers: [...new Set(courseRounds.map(round => round.playerId))].length,
+      roundsWithPlayers: courseRounds.map(round => {
+        const trip = tripsById.get(round.tripId)
+        return {
           ...round,
-          playerName: players.find(p => p.id === round.playerId)?.name || 'Unknown Player',
-          tripName: trips.find(t => t.id === round.tripId)?.location || 'Unknown Trip'
-        }))
-      }
-      
-      setCourseStats(enhancedStats)
-    }
+          playerName: playersById.get(round.playerId)?.name || 'Unknown Player',
+          tripName: trip ? `${getTripYear(trip.startDate)} ${trip.location}` : 'Unknown Trip'
+        }
+      })
+    })
   }, [course, rounds, players, trips])
 
   if (loading) {

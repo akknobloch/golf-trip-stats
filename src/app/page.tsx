@@ -1,8 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Player, Stats, Course, Trip, Round } from '@/lib/types'
-import { calculateStats, getAvailableYears, calculatePlayerStats, calculateCourseTimesPlayed } from '@/lib/utils'
+import { useState, useEffect, useMemo } from 'react'
+import { Player, Course, Trip, Round } from '@/lib/types'
+import {
+  calculateStats,
+  calculatePlayerStats,
+  calculateCourseTimesPlayedMap,
+  getTripYear,
+  getTripChampionName,
+  groupBy,
+  indexById,
+} from '@/lib/utils'
 import { getData } from '../lib/data'
 import Link from 'next/link'
 import TabbedContainer from '@/components/TabbedContainer'
@@ -14,13 +22,6 @@ export default function Home() {
   const [trips, setTrips] = useState<Trip[]>([])
   const [rounds, setRounds] = useState<Round[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [stats, setStats] = useState<Stats>({
-    totalPlayers: 0,
-    totalYears: 0,
-    bestAverage: '--',
-    totalCourses: 0,
-    totalTrips: 0
-  })
 
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<{
@@ -31,35 +32,114 @@ export default function Home() {
   const [showSearchResults, setShowSearchResults] = useState(false)
 
   useEffect(() => {
-    // Load data from static source or localStorage
-    const loadData = () => {
-      try {
-        const data = getData()
-        setPlayers(data.players)
-        setCourses(data.courses)
-        setTrips(data.trips)
-        setRounds(data.rounds)
-      } catch (error) {
-        console.error('Error loading data:', error)
-      } finally {
-        setIsLoading(false)
-      }
+    try {
+      const data = getData()
+      setPlayers(data.players)
+      setCourses(data.courses)
+      setTrips(data.trips)
+      setRounds(data.rounds)
+    } catch (error) {
+      console.error('Error loading data:', error)
+    } finally {
+      setIsLoading(false)
     }
-    
-    loadData()
   }, [])
 
-  useEffect(() => {
-    // Update stats whenever data changes
+  const playersById = useMemo(() => indexById(players), [players])
+  const roundsByTripId = useMemo(() => groupBy(rounds, round => round.tripId), [rounds])
+  const roundsByPlayerId = useMemo(() => groupBy(rounds, round => round.playerId), [rounds])
+  const roundsByCourseId = useMemo(() => groupBy(rounds, round => round.courseId), [rounds])
+  const courseTimesPlayed = useMemo(() => calculateCourseTimesPlayedMap(rounds), [rounds])
+  const championshipCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const trip of trips) {
+      if (!trip.championPlayerId) continue
+      counts.set(trip.championPlayerId, (counts.get(trip.championPlayerId) || 0) + 1)
+    }
+    return counts
+  }, [trips])
+
+  const stats = useMemo(() => {
     const newStats = calculateStats(players, rounds)
-    setStats({
+    return {
       ...newStats,
       totalCourses: courses.length,
       totalTrips: trips.length
-    })
+    }
   }, [players, courses, trips, rounds])
 
-  // Search functionality
+  const sortedTrips = useMemo(
+    () => [...trips].sort((a, b) => getTripYear(b.startDate) - getTripYear(a.startDate)),
+    [trips]
+  )
+
+  const courseScoreStatsById = useMemo(() => {
+    const statsById = new Map<string, { averageScore: number | null; variance: number | null; roundsCount: number }>()
+
+    for (const course of courses) {
+      const courseRounds = roundsByCourseId.get(course.id) || []
+      if (courseRounds.length === 0) {
+        statsById.set(course.id, { averageScore: null, variance: null, roundsCount: 0 })
+        continue
+      }
+
+      const scores = courseRounds.map(round => round.score)
+      statsById.set(course.id, {
+        averageScore: Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length),
+        variance: Math.max(...scores) - Math.min(...scores),
+        roundsCount: scores.length
+      })
+    }
+
+    return statsById
+  }, [courses, roundsByCourseId])
+
+  const { hardestCourseId, easiestCourseId, mostVarianceCourseId } = useMemo(() => {
+    const coursesWithScores = courses
+      .map(course => ({ courseId: course.id, ...(courseScoreStatsById.get(course.id) || { averageScore: null, variance: null, roundsCount: 0 }) }))
+      .filter(stat => stat.roundsCount > 0)
+
+    if (coursesWithScores.length === 0) {
+      return { hardestCourseId: null, easiestCourseId: null, mostVarianceCourseId: null }
+    }
+
+    return {
+      hardestCourseId: coursesWithScores.reduce((max, current) =>
+        (current.averageScore ?? 0) > (max.averageScore ?? 0) ? current : max
+      ).courseId,
+      easiestCourseId: coursesWithScores.reduce((min, current) =>
+        (current.averageScore ?? 0) < (min.averageScore ?? 0) ? current : min
+      ).courseId,
+      mostVarianceCourseId: coursesWithScores.reduce((max, current) =>
+        (current.variance ?? 0) > (max.variance ?? 0) ? current : max
+      ).courseId,
+    }
+  }, [courses, courseScoreStatsById])
+
+  const sortedCourses = useMemo(
+    () => [...courses].sort((a, b) => {
+      const aTimesPlayed = courseTimesPlayed.get(a.id) || 0
+      const bTimesPlayed = courseTimesPlayed.get(b.id) || 0
+      if (aTimesPlayed !== bTimesPlayed) {
+        return bTimesPlayed - aTimesPlayed
+      }
+      return a.name.localeCompare(b.name)
+    }),
+    [courses, courseTimesPlayed]
+  )
+
+  const sortedPlayers = useMemo(
+    () => players
+      .map(player => calculatePlayerStats(player, rounds, trips, roundsByPlayerId))
+      .sort((a, b) => {
+        if (a.averageScore === 0 && b.averageScore !== 0) return 1
+        if (a.averageScore !== 0 && b.averageScore === 0) return -1
+        if (a.averageScore === 0 && b.averageScore === 0) return a.name.localeCompare(b.name)
+        return a.averageScore - b.averageScore
+      }),
+    [players, rounds, trips, roundsByPlayerId]
+  )
+
   const performSearch = (query: string) => {
     if (!query.trim()) {
       setSearchResults({ trips: [], players: [], courses: [] })
@@ -68,18 +148,18 @@ export default function Home() {
     }
 
     const lowerQuery = query.toLowerCase()
-    
-    const matchingTrips = trips.filter(trip => 
+
+    const matchingTrips = trips.filter(trip =>
       trip.location.toLowerCase().includes(lowerQuery) ||
       trip.description?.toLowerCase().includes(lowerQuery) ||
-      new Date(trip.startDate).getFullYear().toString().includes(lowerQuery)
+      getTripYear(trip.startDate).toString().includes(lowerQuery)
     )
 
-    const matchingPlayers = players.filter(player => 
+    const matchingPlayers = players.filter(player =>
       player.name.toLowerCase().includes(lowerQuery)
     )
 
-    const matchingCourses = courses.filter(course => 
+    const matchingCourses = courses.filter(course =>
       course.name.toLowerCase().includes(lowerQuery) ||
       course.location.toLowerCase().includes(lowerQuery) ||
       course.description?.toLowerCase().includes(lowerQuery)
@@ -104,55 +184,6 @@ export default function Home() {
     setSearchResults({ trips: [], players: [], courses: [] })
     setShowSearchResults(false)
   }
-
-  const availableYears = getAvailableYears(rounds)
-  const sortedTrips = [...trips].sort((a, b) => new Date(b.startDate).getFullYear() - new Date(a.startDate).getFullYear())
-  const sortedCourses = [...courses].sort((a, b) => {
-    const aTimesPlayed = calculateCourseTimesPlayed(a.id, rounds)
-    const bTimesPlayed = calculateCourseTimesPlayed(b.id, rounds)
-    if (aTimesPlayed !== bTimesPlayed) {
-      return bTimesPlayed - aTimesPlayed // Sort by trips played (descending)
-    }
-    return a.name.localeCompare(b.name) // Then by name alphabetically
-  })
-  const courseScoreStats = courses.map(course => {
-    const courseRounds = rounds.filter(round => round.courseId === course.id)
-    if (courseRounds.length === 0) {
-      return {
-        courseId: course.id,
-        averageScore: null,
-        variance: null,
-        roundsCount: 0
-      }
-    }
-
-    const scores = courseRounds.map(round => round.score)
-    const averageScore = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
-    const variance = Math.max(...scores) - Math.min(...scores)
-
-    return {
-      courseId: course.id,
-      averageScore,
-      variance,
-      roundsCount: scores.length
-    }
-  })
-  const coursesWithScores = courseScoreStats.filter(stat => stat.roundsCount > 0)
-  const hardestCourseId = coursesWithScores.length > 0
-    ? coursesWithScores.reduce((max, current) => (
-      (current.averageScore ?? 0) > (max.averageScore ?? 0) ? current : max
-    )).courseId
-    : null
-  const easiestCourseId = coursesWithScores.length > 0
-    ? coursesWithScores.reduce((min, current) => (
-      (current.averageScore ?? 0) < (min.averageScore ?? 0) ? current : min
-    )).courseId
-    : null
-  const mostVarianceCourseId = coursesWithScores.length > 0
-    ? coursesWithScores.reduce((max, current) => (
-      (current.variance ?? 0) > (max.variance ?? 0) ? current : max
-    )).courseId
-    : null
 
   return (
     <div className="container">
@@ -206,7 +237,7 @@ export default function Home() {
                searchResults.players.length === 0 && 
                searchResults.courses.length === 0 ? (
                 <div className="no-results">
-                  <p>No results found for "{searchQuery}"</p>
+                  <p>No results found for &quot;{searchQuery}&quot;</p>
                 </div>
               ) : (
                 <div className="search-results-content">
@@ -215,9 +246,7 @@ export default function Home() {
                     <div className="search-category">
                       <h4><i className="fas fa-plane"></i> Trips ({searchResults.trips.length})</h4>
                       <div className="search-items">
-                        {searchResults.trips.map(trip => {
-                          const tripYear = new Date(trip.startDate).getFullYear()
-                          return (
+                        {searchResults.trips.map(trip => (
                             <Link 
                               key={trip.id} 
                               href={`/trips/${trip.id}`}
@@ -226,12 +255,11 @@ export default function Home() {
                             >
                               <div className="search-item-content">
                                 <div className="search-item-title">{trip.location}</div>
-                                <div className="search-item-subtitle">{tripYear}</div>
+                                <div className="search-item-subtitle">{getTripYear(trip.startDate)}</div>
                               </div>
                               <i className="fas fa-arrow-right"></i>
                             </Link>
-                          )
-                        })}
+                        ))}
                       </div>
                     </div>
                   )}
@@ -385,27 +413,16 @@ export default function Home() {
                 <div className="recent-trips-section">
                   <div className="trips-grid">
                     {sortedTrips.map(trip => {
-                      const tripRounds = rounds.filter(round => round.tripId === trip.id)
+                      const tripRounds = roundsByTripId.get(trip.id) || []
                       const tripPlayersWithScores = new Set(tripRounds.map(round => round.playerId))
-                      const tripCourses = new Set(tripRounds.map(round => round.courseId))
-                      const tripYear = new Date(trip.startDate).getFullYear()
-                      const tripName = `${tripYear} ${trip.location}`
-                      
-                      // Include attendees who don't have scores
-                      const attendeesWithoutScores = trip.attendees 
-                        ? players.filter(player => 
-                            trip.attendees!.includes(player.id) && 
-                            !tripRounds.some(round => round.playerId === player.id)
-                          )
-                        : []
-                      
-                      // Total players = players with scores + attendees without scores
+                      const attendeesWithoutScores = (trip.attendees || []).filter(
+                        playerId => !tripPlayersWithScores.has(playerId)
+                      )
                       const totalTripPlayers = tripPlayersWithScores.size + attendeesWithoutScores.length
-                      
+
                       return (
                         <Link key={trip.id} href={`/trips/${trip.id}`} className="trip-card-link">
                           <ParallaxCard className="trip-card" intensity={8} rotationIntensity={2}>
-                            {/* Trip Photo Thumbnail */}
                             <div className="trip-photo-thumbnail">
                               {trip.photos && trip.photos.length > 0 ? (
                                 <>
@@ -436,7 +453,7 @@ export default function Home() {
                             <div className="trip-header">
                             <h3 title={trip.location}>{trip.location}</h3>
                               <div className="trip-header-right">
-                                <span className="trip-year">{new Date(trip.startDate).getFullYear()}</span>
+                                <span className="trip-year">{getTripYear(trip.startDate)}</span>
                                 <div className="trip-actions">
                                   <div className="action-btn" title="View Details">
                                     <i className="fas fa-arrow-right"></i>
@@ -446,7 +463,7 @@ export default function Home() {
                             </div>
                             <div className="trip-details">
                               <p><i className="fas fa-users"></i> {totalTripPlayers} players</p>
-                              <p><i className="fas fa-trophy"></i> {trip.championPlayerId ? players.find(p => p.id === trip.championPlayerId)?.name || 'Unknown' : 'Unknown'}</p>
+                              <p><i className="fas fa-trophy"></i> {getTripChampionName(trip, playersById)}</p>
                             </div>
                           </ParallaxCard>
                         </Link>
@@ -466,17 +483,9 @@ export default function Home() {
               content: players.length > 0 ? (
                 <div className="all-players-section">
                   <div className="players-grid">
-                    {players
-                      .map(player => calculatePlayerStats(player, rounds, trips))
-                      .sort((a, b) => {
-                        // Put players without scores at the end
-                        if (a.averageScore === 0 && b.averageScore !== 0) return 1
-                        if (a.averageScore !== 0 && b.averageScore === 0) return -1
-                        if (a.averageScore === 0 && b.averageScore === 0) return a.name.localeCompare(b.name)
-                        return a.averageScore - b.averageScore
-                      })
-                      .map((player, index) => {
-                        const championshipCount = trips.filter(trip => trip.championPlayerId === player.id).length
+                    {sortedPlayers.map((player, index) => {
+                        const championshipCount = championshipCounts.get(player.id) || 0
+                        const playerRoundCount = roundsByPlayerId.get(player.id)?.length || 0
                         return (
                         <Link key={player.id} href={`/players/${player.id}`} className="player-card-link">
                           <ParallaxCard className="player-card" intensity={12} rotationIntensity={4}>
@@ -506,12 +515,11 @@ export default function Home() {
                                 <span className="stat-label">Trips</span>
                               </div>
                               <div className="stat-item">
-                                <span className="stat-value">{rounds.filter(r => r.playerId === player.id).length}</span>
+                                <span className="stat-value">{playerRoundCount}</span>
                                 <span className="stat-label">Rounds</span>
                               </div>
                             </div>
                             
-                            {/* Best Score Highlight */}
                             {player.bestScore && (
                               <div className="player-best-score">
                                 <div className="best-score-header">
@@ -559,11 +567,11 @@ export default function Home() {
                           </div>
                           <div className="course-details">
                             <p><i className="fas fa-map-marker-alt"></i> {course.location}</p>
-                            <p><i className="fas fa-play"></i> Played {calculateCourseTimesPlayed(course.id, rounds)} times</p>
+                            <p><i className="fas fa-play"></i> Played {courseTimesPlayed.get(course.id) || 0} times</p>
                             <div className='course-stats'>
                                                           <p>
                               <i className="fas fa-chart-line"></i> Avg Score: {
-                                courseScoreStats.find(stat => stat.courseId === course.id)?.averageScore ?? '--'
+                                courseScoreStatsById.get(course.id)?.averageScore ?? '--'
                               }
                             </p>
                               <div className="course-tags">

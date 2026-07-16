@@ -1,5 +1,49 @@
 import { Player, Stats, YearStats, Round, Trip, Course, CourseStats } from './types'
 
+export function indexById<T extends { id: string }>(items: T[]): Map<string, T> {
+  return new Map(items.map(item => [item.id, item]))
+}
+
+export function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
+  const groups = new Map<string, T[]>()
+  for (const item of items) {
+    const key = keyFn(item)
+    const group = groups.get(key)
+    if (group) {
+      group.push(item)
+    } else {
+      groups.set(key, [item])
+    }
+  }
+  return groups
+}
+
+export function calculateCourseTimesPlayedMap(rounds: Round[]): Map<string, number> {
+  const tripsByCourse = new Map<string, Set<string>>()
+  for (const round of rounds) {
+    let trips = tripsByCourse.get(round.courseId)
+    if (!trips) {
+      trips = new Set()
+      tripsByCourse.set(round.courseId, trips)
+    }
+    trips.add(round.tripId)
+  }
+
+  const timesPlayed = new Map<string, number>()
+  for (const [courseId, trips] of tripsByCourse) {
+    timesPlayed.set(courseId, trips.size)
+  }
+  return timesPlayed
+}
+
+export function getTripChampionName(
+  trip: Trip,
+  playersById: Map<string, Player>
+): string {
+  if (!trip.championPlayerId) return 'Unknown'
+  return playersById.get(trip.championPlayerId)?.name || 'Unknown'
+}
+
 export function calculateStats(players: Player[], rounds: Round[]): Stats {
   if (players.length === 0) {
     return {
@@ -12,50 +56,40 @@ export function calculateStats(players: Player[], rounds: Round[]): Stats {
   }
 
   const totalPlayers = players.length
-  
-  // Calculate total years from unique years in rounds
-  const uniqueYears = new Set(rounds.map(round => round.year))
-  const totalYears = uniqueYears.size
-  
-  // Calculate best average by computing each player's average from their rounds
+  const uniqueYears = new Set<number>()
+  const roundsByPlayer = groupBy(rounds, round => round.playerId)
+  const playersById = indexById(players)
+
   let bestAverage = '--'
   let bestAveragePlayer: string | undefined
-  if (rounds.length > 0) {
-    const playerAverages = players
-      .map(player => {
-        const playerRounds = rounds.filter(round => round.playerId === player.id)
-        if (playerRounds.length === 0) return { player, average: Infinity }
-        const average = playerRounds.reduce((sum, round) => sum + round.score, 0) / playerRounds.length
-        return { player, average }
-      })
-      .filter(p => p.average !== Infinity)
-    
-    if (playerAverages.length > 0) {
-      const bestPlayer = playerAverages.reduce((best, current) => 
-        current.average < best.average ? current : best
-      )
-      bestAverage = bestPlayer.average.toFixed(1)
-      bestAveragePlayer = bestPlayer.player.name
-    }
-  }
-
-  // Find best single score across all rounds
   let bestScore: number | undefined
   let bestScoreYear: number | undefined
   let bestScorePlayer: string | undefined
 
-  rounds.forEach(round => {
-    if (!bestScore || round.score < bestScore) {
+  for (const round of rounds) {
+    uniqueYears.add(round.year)
+    if (bestScore === undefined || round.score < bestScore) {
       bestScore = round.score
       bestScoreYear = round.year
-      const player = players.find(p => p.id === round.playerId)
-      bestScorePlayer = player?.name
+      bestScorePlayer = playersById.get(round.playerId)?.name
     }
-  })
+  }
+
+  let lowestAverage = Infinity
+  for (const player of players) {
+    const playerRounds = roundsByPlayer.get(player.id)
+    if (!playerRounds || playerRounds.length === 0) continue
+    const average = playerRounds.reduce((sum, round) => sum + round.score, 0) / playerRounds.length
+    if (average < lowestAverage) {
+      lowestAverage = average
+      bestAverage = average.toFixed(1)
+      bestAveragePlayer = player.name
+    }
+  }
 
   return {
     totalPlayers,
-    totalYears,
+    totalYears: uniqueYears.size,
     bestAverage,
     bestAveragePlayer,
     bestScore,
@@ -114,27 +148,35 @@ export function getAvailableYears(rounds: Round[]): number[] {
   return Array.from(years).sort((a, b) => b - a) // Sort descending (newest first)
 }
 
-export function calculatePlayerAverage(player: Player, rounds: Round[]): number {
-  const playerRounds = rounds.filter(round => round.playerId === player.id)
+export function calculatePlayerAverage(
+  player: Player,
+  rounds: Round[],
+  roundsByPlayerId?: Map<string, Round[]>
+): number {
+  const playerRounds = roundsByPlayerId?.get(player.id) ?? rounds.filter(round => round.playerId === player.id)
   if (playerRounds.length === 0) return 0
   const totalScore = playerRounds.reduce((sum, round) => sum + round.score, 0)
   return Math.round((totalScore / playerRounds.length) * 10) / 10
 }
 
-export function calculatePlayerStats(player: Player, rounds: Round[], trips: Trip[] = []): Player {
-  const playerRounds = rounds.filter(round => round.playerId === player.id)
-  
+export function calculatePlayerStats(
+  player: Player,
+  rounds: Round[],
+  trips: Trip[] = [],
+  roundsByPlayerId?: Map<string, Round[]>
+): Player {
+  const playerRounds = roundsByPlayerId?.get(player.id) ?? rounds.filter(round => round.playerId === player.id)
+
   // Get trips where player has scores
   const tripsWithScores = new Set(playerRounds.map(round => round.tripId))
-  
+
   // Get trips where player attended but doesn't have scores
-  const tripsWithoutScores = trips.filter(trip => 
+  const tripsWithoutScores = trips.filter(trip =>
     trip.attendees?.includes(player.id) && !tripsWithScores.has(trip.id)
   )
-  
-  // Total trips = trips with scores + trips without scores
+
   const totalTrips = tripsWithScores.size + tripsWithoutScores.length
-  
+
   if (playerRounds.length === 0 && tripsWithoutScores.length === 0) {
     return {
       ...player,
@@ -145,17 +187,17 @@ export function calculatePlayerStats(player: Player, rounds: Round[], trips: Tri
   }
 
   const uniqueYears = new Set(playerRounds.map(round => round.year))
-  
-  // Add years from trips without scores
+
   tripsWithoutScores.forEach(trip => {
-    const tripYear = new Date(trip.startDate).getFullYear()
-    uniqueYears.add(tripYear)
+    uniqueYears.add(getTripYear(trip.startDate))
   })
-  
-  const averageScore = calculatePlayerAverage(player, rounds)
+
+  const averageScore = playerRounds.length === 0
+    ? 0
+    : Math.round((playerRounds.reduce((sum, round) => sum + round.score, 0) / playerRounds.length) * 10) / 10
   const bestScore = playerRounds.length > 0 ? Math.min(...playerRounds.map(round => round.score)) : undefined
   const bestScoreRound = playerRounds.find(round => round.score === bestScore)
-  
+
   return {
     ...player,
     yearsPlayed: uniqueYears.size,
@@ -308,59 +350,51 @@ function parseCSVLine(line: string): string[] {
   return values
 }
 
-// Date utility functions
-export function formatDate(dateString: string): string {
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+
+/** Parse YYYY-MM-DD as a local calendar date to avoid UTC day shifts. */
+export function parseDateOnly(dateString: string): Date | null {
   try {
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) {
-      // If date is invalid, try to parse common formats
-      const parts = dateString.split('-')
-      if (parts.length === 3) {
-        const [year, month, day] = parts
-        const validDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
-        if (!isNaN(validDate.getTime())) {
-          return validDate.toLocaleDateString()
-        }
-      }
-      return 'Invalid Date'
+    if (DATE_ONLY_PATTERN.test(dateString)) {
+      const [year, month, day] = dateString.split('-').map(part => Number(part))
+      const date = new Date(year, month - 1, day)
+      return isNaN(date.getTime()) ? null : date
     }
-    return date.toLocaleDateString()
-  } catch (error) {
-    console.error('Error formatting date:', dateString, error)
-    return 'Invalid Date'
+
+    const date = new Date(dateString)
+    return isNaN(date.getTime()) ? null : date
+  } catch {
+    return null
   }
 }
 
+export function getTripYear(dateString: string, fallback = new Date().getFullYear()): number {
+  return parseDateOnly(dateString)?.getFullYear() ?? fallback
+}
+
+export function formatDate(dateString: string): string {
+  const date = parseDateOnly(dateString)
+  return date ? date.toLocaleDateString() : 'Invalid Date'
+}
+
 export function getDateValue(dateString: string): number {
-  try {
-    const date = new Date(dateString)
-    return isNaN(date.getTime()) ? 0 : date.getTime()
-  } catch {
-    return 0
+  if (DATE_ONLY_PATTERN.test(dateString)) {
+    const [year, month, day] = dateString.split('-').map(part => Number(part))
+    return Date.UTC(year, month - 1, day)
   }
+
+  const date = parseDateOnly(dateString)
+  return date ? date.getTime() : 0
 }
 
 export function calculateTripDuration(startDate: string, endDate: string): number | string {
   try {
-    const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/
-    const toUtcTimestamp = (value: string): number => {
-      if (dateOnlyPattern.test(value)) {
-        const [year, month, day] = value.split('-').map(part => Number(part))
-        return Date.UTC(year, month - 1, day)
-      }
-      return new Date(value).getTime()
-    }
-
-    const start = toUtcTimestamp(startDate)
-    const end = toUtcTimestamp(endDate)
-    if (isNaN(start) || isNaN(end)) {
+    const start = getDateValue(startDate)
+    const end = getDateValue(endDate)
+    if (!start || !end || end < start) {
       return 'N/A'
     }
-    const diffMs = end - start
-    if (diffMs < 0) {
-      return 'N/A'
-    }
-    return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1
+    return Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1
   } catch {
     return 'N/A'
   }
