@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Player, Course, Trip, Round } from '@/lib/types'
-import { formatDate, getDateValue, calculateTripDuration } from '@/lib/utils'
+import { formatDate, getDateValue, calculateTripDuration, getTripYear, indexById } from '@/lib/utils'
 import { getData } from '../../../lib/data'
 import PhotoGallery from '@/components/PhotoGallery'
 import SortableTable from '@/components/SortableTable'
@@ -53,7 +53,6 @@ interface CourseRoundRow {
 
 export default function TripDetails() {
   const params = useParams()
-  const router = useRouter()
   const tripId = params.id as string
   
   const [trip, setTrip] = useState<Trip | null>(null)
@@ -62,7 +61,7 @@ export default function TripDetails() {
   const [rounds, setRounds] = useState<Round[]>([])
   const [tripRounds, setTripRounds] = useState<TripRound[]>([])
   const [playerStats, setPlayerStats] = useState<PlayerTripStats[]>([])
-  const [champion, setChampion] = useState<PlayerTripStats | null>(null)
+  const [champion, setChampion] = useState<Player | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -174,10 +173,15 @@ export default function TripDetails() {
     })
 
     setPlayerStats(playerStatsArray)
-    
-    // Set champion (player with best average score)
-    if (playerStatsArray.length > 0) {
-      setChampion(playerStatsArray[0])
+
+    // Prefer the stored trip champion so home and detail pages stay consistent
+    const playersById = indexById(players)
+    if (trip.championPlayerId && playersById.has(trip.championPlayerId)) {
+      setChampion(playersById.get(trip.championPlayerId) || null)
+    } else if (playerStatsArray.length > 0) {
+      setChampion(playerStatsArray[0].player)
+    } else {
+      setChampion(null)
     }
   }, [trip, players, courses, rounds, tripId])
 
@@ -213,14 +217,7 @@ export default function TripDetails() {
     )
   }
 
-  const tripYear = (() => {
-    try {
-      const date = new Date(trip.startDate)
-      return isNaN(date.getTime()) ? new Date().getFullYear() : date.getFullYear()
-    } catch {
-      return new Date().getFullYear()
-    }
-  })()
+  const tripYear = getTripYear(trip.startDate)
   const tripName = `${tripYear} ${trip.location}`
   const uniqueCourses = Array.from(new Set(tripRounds.map(tr => tr.course.id)))
     .map(courseId => courses.find(c => c.id === courseId))
@@ -373,7 +370,7 @@ export default function TripDetails() {
                 <div className="champion-card">
                   <div className="champion-content">
                     <div className="champion-player">
-                      <h3>🏆 {champion.player.name}</h3>
+                      <h3>🏆 {champion.name}</h3>
                     </div>
                   </div>
                 </div>

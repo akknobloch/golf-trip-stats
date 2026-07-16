@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Player, Course, Trip, Round } from '@/lib/types'
-import { calculatePlayerStats } from '@/lib/utils'
+import { calculatePlayerStats, formatDate, getDateValue, getTripYear } from '@/lib/utils'
 import { getData } from '../../../lib/data'
 import SortableTable from '@/components/SortableTable'
 import { type ColumnDef } from '@tanstack/react-table'
@@ -15,17 +15,6 @@ interface PlayerRound {
   round: Round
   course: Course
   trip: Trip
-}
-
-interface PlayerTripStats {
-  trip: Trip
-  rounds: PlayerRound[]
-  totalScore: number
-  averageScore: number
-  bestScore: number
-  worstScore: number
-  roundsPlayed: number
-  rank?: number
 }
 
 interface PlayerCourseStats {
@@ -51,7 +40,6 @@ interface PlayerRoundTableRow {
 
 export default function PlayerDetails() {
   const params = useParams()
-  const router = useRouter()
   const playerId = params.id as string
   
   const [player, setPlayer] = useState<Player | null>(null)
@@ -60,9 +48,7 @@ export default function PlayerDetails() {
   const [trips, setTrips] = useState<Trip[]>([])
   const [rounds, setRounds] = useState<Round[]>([])
   const [playerRounds, setPlayerRounds] = useState<PlayerRound[]>([])
-  const [tripStats, setTripStats] = useState<PlayerTripStats[]>([])
   const [courseStats, setCourseStats] = useState<PlayerCourseStats[]>([])
-  const [yearStats, setYearStats] = useState<{ [year: number]: { rounds: number, average: number, best: number } }>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -98,67 +84,31 @@ export default function PlayerDetails() {
   }, [playerId])
 
   useEffect(() => {
-    if (!player || courses.length === 0 || trips.length === 0 || rounds.length === 0) return
+    if (!player) return
 
-    // Get all rounds for this player
+    const tripsById = new Map(trips.map(trip => [trip.id, trip]))
+    const coursesById = new Map(courses.map(course => [course.id, course]))
+
     const playerRoundData = rounds
       .filter(round => round.playerId === playerId)
       .map(round => {
-        const course = courses.find(c => c.id === round.courseId)
-        const trip = trips.find(t => t.id === round.tripId)
-        
-        // Only include rounds that have valid course and trip data
+        const course = coursesById.get(round.courseId)
+        const trip = tripsById.get(round.tripId)
+
         if (!course || !trip) {
           console.warn(`Skipping round ${round.id} - missing course or trip data`)
           return null
         }
-        
-        return {
-          round,
-          course,
-          trip
-        }
+
+        return { round, course, trip }
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
-      .sort((a, b) => new Date(b.round.date).getTime() - new Date(a.round.date).getTime())
+      .sort((a, b) => getDateValue(b.round.date) - getDateValue(a.round.date))
 
     setPlayerRounds(playerRoundData)
 
-    // Calculate trip statistics
-    const tripStatsMap = new Map<string, PlayerTripStats>()
-    
-    playerRoundData.forEach(({ round, course, trip }) => {
-      if (!tripStatsMap.has(trip.id)) {
-        tripStatsMap.set(trip.id, {
-          trip,
-          rounds: [],
-          totalScore: 0,
-          averageScore: 0,
-          bestScore: Infinity,
-          worstScore: 0,
-          roundsPlayed: 0
-        })
-      }
-      
-      const stats = tripStatsMap.get(trip.id)!
-      stats.rounds.push({ round, course, trip })
-      stats.totalScore += round.score
-      stats.roundsPlayed += 1
-      stats.bestScore = Math.min(stats.bestScore, round.score)
-      stats.worstScore = Math.max(stats.worstScore, round.score)
-    })
-
-    // Calculate averages and sort by year
-    const tripStatsArray = Array.from(tripStatsMap.values()).map(stats => ({
-      ...stats,
-      averageScore: Math.round(stats.totalScore / stats.roundsPlayed)
-    })).sort((a, b) => new Date(b.trip.startDate).getTime() - new Date(a.trip.startDate).getTime())
-
-    setTripStats(tripStatsArray)
-
-    // Calculate course statistics
     const courseStatsMap = new Map<string, PlayerCourseStats>()
-    
+
     playerRoundData.forEach(({ round, course, trip }) => {
       if (!courseStatsMap.has(course.id)) {
         courseStatsMap.set(course.id, {
@@ -170,7 +120,7 @@ export default function PlayerDetails() {
           timesPlayed: 0
         })
       }
-      
+
       const stats = courseStatsMap.get(course.id)!
       stats.rounds.push({ round, course, trip })
       stats.timesPlayed += 1
@@ -178,34 +128,12 @@ export default function PlayerDetails() {
       stats.worstScore = Math.max(stats.worstScore, round.score)
     })
 
-    // Calculate course averages
     const courseStatsArray = Array.from(courseStatsMap.values()).map(stats => ({
       ...stats,
       averageScore: Math.round(stats.rounds.reduce((sum, r) => sum + r.round.score, 0) / stats.rounds.length)
     })).sort((a, b) => a.averageScore - b.averageScore)
 
     setCourseStats(courseStatsArray)
-
-    // Calculate year statistics
-    const yearStatsMap: { [year: number]: { rounds: number, average: number, best: number } } = {}
-    
-    playerRoundData.forEach(({ round }) => {
-      if (!yearStatsMap[round.year]) {
-        yearStatsMap[round.year] = { rounds: 0, average: 0, best: Infinity }
-      }
-      
-      yearStatsMap[round.year].rounds += 1
-      yearStatsMap[round.year].best = Math.min(yearStatsMap[round.year].best, round.score)
-    })
-
-    // Calculate year averages
-    Object.keys(yearStatsMap).forEach(yearStr => {
-      const year = parseInt(yearStr)
-      const yearRounds = playerRoundData.filter(pr => pr.round.year === year)
-      yearStatsMap[year].average = Math.round(yearRounds.reduce((sum, pr) => sum + pr.round.score, 0) / yearRounds.length)
-    })
-
-    setYearStats(yearStatsMap)
   }, [player, courses, trips, rounds, playerId])
 
   if (loading) {
@@ -227,12 +155,14 @@ export default function PlayerDetails() {
     )
   }
 
-  // Calculate player stats
   const playerStats = calculatePlayerStats(player, rounds, trips)
-  const uniqueYears = Object.keys(yearStats).map(y => parseInt(y)).sort((a, b) => b - a)
-  const bestScore = Math.min(...playerRounds.map(pr => pr.round.score))
-  const worstScore = Math.max(...playerRounds.map(pr => pr.round.score))
-  const bestScoreRound = playerRounds.find(pr => pr.round.score === bestScore)
+  const hasRounds = playerRounds.length > 0
+  const bestScore = hasRounds ? Math.min(...playerRounds.map(pr => pr.round.score)) : null
+  const worstScore = hasRounds ? Math.max(...playerRounds.map(pr => pr.round.score)) : null
+  const bestScoreRound = hasRounds ? playerRounds.find(pr => pr.round.score === bestScore) : undefined
+  const averageRoundScore = hasRounds
+    ? Math.round(playerRounds.reduce((sum, pr) => sum + pr.round.score, 0) / playerRounds.length)
+    : null
   const championshipCount = trips.filter(trip => trip.championPlayerId === playerId).length
   const roundsTableData: PlayerRoundTableRow[] = playerRounds.map(({ round, course, trip }) => {
     const toPar = round.score - course.par
@@ -241,10 +171,10 @@ export default function PlayerDetails() {
 
     return {
       id: round.id,
-      dateValue: new Date(round.date).getTime(),
-      dateLabel: new Date(round.date).toLocaleDateString(),
+      dateValue: getDateValue(round.date),
+      dateLabel: formatDate(round.date),
       courseName: course.name,
-      tripName: `${new Date(trip.startDate).getFullYear()} ${trip.location}`,
+      tripName: `${getTripYear(trip.startDate)} ${trip.location}`,
       score: round.score,
       toPar,
       toParDisplay,
@@ -337,52 +267,58 @@ export default function PlayerDetails() {
         {/* Performance Stats */}
         <div className="performance-stats">
           <h2>Performance Statistics</h2>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon">
-                <i className="fas fa-chart-line"></i>
+          {hasRounds ? (
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-icon">
+                  <i className="fas fa-chart-line"></i>
+                </div>
+                <div className="stat-content">
+                  <h3>{playerStats.averageScore}</h3>
+                  <p>Average Score</p>
+                </div>
               </div>
-              <div className="stat-content">
-                <h3>{playerStats.averageScore}</h3>
-                <p>Average Score</p>
-              </div>
-            </div>
 
-            <div className="stat-card">
-              <div className="stat-icon">
-                <i className="fas fa-star"></i>
+              <div className="stat-card">
+                <div className="stat-icon">
+                  <i className="fas fa-star"></i>
+                </div>
+                <div className="stat-content">
+                  <h3>{bestScore}</h3>
+                  <p>Best Round</p>
+                  {bestScoreRound && (
+                    <small title={`${bestScoreRound.course.name} (${bestScoreRound.round.year})`}>
+                      {bestScoreRound.course.name} ({bestScoreRound.round.year})
+                    </small>
+                  )}
+                </div>
               </div>
-              <div className="stat-content">
-                <h3>{bestScore}</h3>
-                <p>Best Round</p>
-                {bestScoreRound && (
-                  <small title={`${bestScoreRound.course.name} (${bestScoreRound.round.year})`}>
-                    {bestScoreRound.course.name} ({bestScoreRound.round.year})
-                  </small>
-                )}
-              </div>
-            </div>
 
-            <div className="stat-card">
-              <div className="stat-icon">
-                <i className="fas fa-chart-bar"></i>
+              <div className="stat-card">
+                <div className="stat-icon">
+                  <i className="fas fa-chart-bar"></i>
+                </div>
+                <div className="stat-content">
+                  <h3>{worstScore}</h3>
+                  <p>Worst Round</p>
+                </div>
               </div>
-              <div className="stat-content">
-                <h3>{worstScore}</h3>
-                <p>Worst Round</p>
-              </div>
-            </div>
 
-            <div className="stat-card">
-              <div className="stat-icon">
-                <i className="fas fa-arrows-alt-h"></i>
-              </div>
-              <div className="stat-content">
-                <h3>{worstScore - bestScore}</h3>
-                <p>Score Range</p>
+              <div className="stat-card">
+                <div className="stat-icon">
+                  <i className="fas fa-arrows-alt-h"></i>
+                </div>
+                <div className="stat-content">
+                  <h3>{(worstScore ?? 0) - (bestScore ?? 0)}</h3>
+                  <p>Score Range</p>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="empty-state">
+              <p>No rounds recorded for this player yet.</p>
+            </div>
+          )}
         </div>
 
         {/* All Rounds */}
@@ -394,20 +330,22 @@ export default function PlayerDetails() {
                 <span className="recent-rounds-label">All Rounds</span>
                 <span className="recent-rounds-count">{playerRounds.length} rounds</span>
               </div>
-              <div className="recent-rounds-stats">
-                <div className="recent-rounds-stat">
-                  <span className="stat-value">{Math.round(playerRounds.reduce((sum, pr) => sum + pr.round.score, 0) / playerRounds.length)}</span>
-                  <span className="stat-label">Avg</span>
+              {hasRounds && (
+                <div className="recent-rounds-stats">
+                  <div className="recent-rounds-stat">
+                    <span className="stat-value">{averageRoundScore}</span>
+                    <span className="stat-label">Avg</span>
+                  </div>
+                  <div className="recent-rounds-stat">
+                    <span className="stat-value">{bestScore}</span>
+                    <span className="stat-label">Best</span>
+                  </div>
+                  <div className="recent-rounds-stat">
+                    <span className="stat-value">{worstScore}</span>
+                    <span className="stat-label">Worst</span>
+                  </div>
                 </div>
-                <div className="recent-rounds-stat">
-                  <span className="stat-value">{Math.min(...playerRounds.map(pr => pr.round.score))}</span>
-                  <span className="stat-label">Best</span>
-                </div>
-                <div className="recent-rounds-stat">
-                  <span className="stat-value">{Math.max(...playerRounds.map(pr => pr.round.score))}</span>
-                  <span className="stat-label">Worst</span>
-                </div>
-              </div>
+              )}
             </div>
             
             <SortableTable

@@ -5,7 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Player, Course, Trip, Round } from '@/lib/types'
 import { calculatePlayerStats } from '@/lib/utils'
 import { getStaticData } from '@/lib/data'
-import { requireAuth, logout } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth'
+import { generateGolfDataFileContent, parseGolfDataFileContent } from '@/lib/golf-data-file'
 import Link from 'next/link'
 import Toast from '@/components/Toast'
 import PlayerEditForm from '@/components/PlayerEditForm'
@@ -108,20 +109,7 @@ export default function Admin() {
   }
 
   const generateTypeScriptContent = () => {
-    return `import { Player, Course, Trip, Round } from '@/lib/types'
-
-// Static data for public deployment
-// This data will be embedded in the application and served statically
-// Update this file when you want to update the public data
-
-export const staticPlayers: Player[] = ${JSON.stringify(players, null, 2)}
-
-export const staticCourses: Course[] = ${JSON.stringify(courses, null, 2)}
-
-export const staticTrips: Trip[] = ${JSON.stringify(trips, null, 2)}
-
-export const staticRounds: Round[] = ${JSON.stringify(rounds, null, 2)}
-`
+    return generateGolfDataFileContent({ players, courses, trips, rounds })
   }
 
   const loadEditorContent = () => {
@@ -130,37 +118,10 @@ export const staticRounds: Round[] = ${JSON.stringify(rounds, null, 2)}
     setIsEditing(false)
   }
 
-  const validateEditorContent = (content: string): { isValid: boolean; error?: string; data?: any } => {
+  const validateEditorContent = (content: string): { isValid: boolean; error?: string; data?: { players: Player[]; courses: Course[]; trips: Trip[]; rounds: Round[] } } => {
     try {
-      // Remove the import statement and export declarations to get just the data
-      const dataSection = content.replace(/import.*?from.*?;?\s*/g, '')
-        .replace(/export const staticPlayers: Player\[\] = /, '')
-        .replace(/export const staticCourses: Course\[\] = /, '')
-        .replace(/export const staticTrips: Trip\[\] = /, '')
-        .replace(/export const staticRounds: Round\[\] = /, '')
-        .replace(/\/\/.*$/gm, '') // Remove comments
-        .trim()
-
-      // Try to parse the data
-      const dataMatch = dataSection.match(/(\[[\s\S]*?\])\s*(\[[\s\S]*?\])\s*(\[[\s\S]*?\])\s*(\[[\s\S]*?\])\s*$/)
-      
-      if (!dataMatch) {
-        return { isValid: false, error: 'Could not parse data structure. Please ensure the file has the correct format.' }
-      }
-
-      const [, playersStr, coursesStr, tripsStr, roundsStr] = dataMatch
-      
-      const players = JSON.parse(playersStr)
-      const courses = JSON.parse(coursesStr)
-      const trips = JSON.parse(tripsStr)
-      const rounds = JSON.parse(roundsStr)
-
-      // Basic validation
-      if (!Array.isArray(players) || !Array.isArray(courses) || !Array.isArray(trips) || !Array.isArray(rounds)) {
-        return { isValid: false, error: 'All data must be arrays.' }
-      }
-
-      return { isValid: true, data: { players, courses, trips, rounds } }
+      const data = parseGolfDataFileContent(content)
+      return { isValid: true, data }
     } catch (error) {
       return { isValid: false, error: `Parse error: ${error instanceof Error ? error.message : 'Unknown error'}` }
     }
@@ -181,7 +142,6 @@ export const staticRounds: Round[] = ${JSON.stringify(rounds, null, 2)}
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: editorContent,
           data: validation.data
         })
       })
@@ -192,21 +152,19 @@ export const staticRounds: Round[] = ${JSON.stringify(rounds, null, 2)}
 
       const result = await response.json()
       
-      if (result.success) {
+      if (result.success && validation.data) {
         setToast({
-          message: 'Data saved successfully! The application will reload to reflect changes.',
+          message: 'Data saved successfully! Refresh the page to see public site updates.',
           type: 'success',
           isVisible: true
         })
         setIsEditing(false)
         setEditorError('')
-        
-        // Reload the data
-        const data = getStaticData()
-        setPlayers(data.players)
-        setCourses(data.courses)
-        setTrips(data.trips)
-        setRounds(data.rounds)
+        setPlayers(validation.data.players)
+        setCourses(validation.data.courses)
+        setTrips(validation.data.trips)
+        setRounds(validation.data.rounds)
+        setEditorContent(generateGolfDataFileContent(validation.data))
       } else {
         throw new Error(result.error || 'Failed to save data')
       }
@@ -376,28 +334,12 @@ player2,trip1,course1,78,2024-06-15,2024,Personal best`
         trips: sanitizedTrips
       }
 
-      const content = `import { Player, Course, Trip, Round } from '@/lib/types'
-
-// Static data for public deployment
-// This data will be embedded in the application and served statically
-// Update this file when you want to update the public data
-
-export const staticPlayers: Player[] = ${JSON.stringify(sanitizedData.players, null, 2)}
-
-export const staticCourses: Course[] = ${JSON.stringify(sanitizedData.courses, null, 2)}
-
-export const staticTrips: Trip[] = ${JSON.stringify(sanitizedData.trips, null, 2)}
-
-export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null, 2)}
-`
-
       const response = await fetch('/api/admin/save-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content,
           data: sanitizedData
         })
       })

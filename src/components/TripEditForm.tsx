@@ -188,7 +188,7 @@ export default function TripEditForm({ trip, players, trips = [], onSave, onCanc
               ))}
             </div>
             <small className="form-help">
-              Select players who attended this trip but don't have scores recorded
+              Select players who attended this trip but do not have scores recorded
             </small>
           </div>
 
