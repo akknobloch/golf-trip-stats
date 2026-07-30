@@ -2212,10 +2212,16 @@ body {
 
 /* Responsive design */
 @media (max-width: 768px) {
+    .header-top {
+        top: 0.65rem;
+        left: 0.85rem;
+    }
+
     .header h1 {
         font-size: 1.8rem;
         word-wrap: break-word;
         hyphens: auto;
+        padding: 0 0.5rem;
     }
     
     .header p {
