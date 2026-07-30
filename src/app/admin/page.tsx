@@ -341,9 +341,7 @@ player2,trip1,course1,78,2024-06-15,2024,Personal best`
     }
   }
 
-  // Inline editing functions
-  const MAX_PHOTO_DATA_URL_LENGTH = 900000
-
+  // Keep display images for fullscreen viewing. Only drop a duplicate thumbnail field.
   const normalizeTripPhotosForSave = (trip: Trip): Trip => {
     if (!trip.photos || trip.photos.length === 0) {
       return trip
@@ -351,12 +349,6 @@ player2,trip1,course1,78,2024-06-15,2024,Personal best`
 
     const photos = trip.photos.map(photo => {
       const normalized = { ...photo }
-      const hasDataUrl = typeof normalized.url === 'string' && normalized.url.startsWith('data:')
-      const hasThumbnail = typeof normalized.thumbnailUrl === 'string' && normalized.thumbnailUrl.length > 0
-
-      if (hasDataUrl && hasThumbnail && normalized.url.length > MAX_PHOTO_DATA_URL_LENGTH) {
-        normalized.url = normalized.thumbnailUrl as string
-      }
 
       if (normalized.thumbnailUrl === normalized.url) {
         normalized.thumbnailUrl = undefined

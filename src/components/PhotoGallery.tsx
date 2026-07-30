@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { TripPhoto } from '@/lib/types'
 
 interface PhotoGalleryProps {
@@ -12,6 +13,13 @@ interface PhotoGalleryProps {
 export default function PhotoGallery({ photos, title, className = '' }: PhotoGalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<TripPhoto | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [mounted, setMounted] = useState(false)
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const isOpen = selectedPhoto !== null
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const openModal = (photo: TripPhoto, index: number) => {
     setSelectedPhoto(photo)
@@ -23,29 +31,49 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
     setCurrentIndex(0)
   }
 
-  const nextPhoto = () => {
-    if (selectedPhoto && currentIndex < photos.length - 1) {
-      setCurrentIndex(currentIndex + 1)
-      setSelectedPhoto(photos[currentIndex + 1])
+  const goToIndex = (index: number) => {
+    if (index < 0 || index >= photos.length) {
+      return
     }
+    setCurrentIndex(index)
+    setSelectedPhoto(photos[index])
   }
 
-  const prevPhoto = () => {
-    if (selectedPhoto && currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1)
-      setSelectedPhoto(photos[currentIndex - 1])
+  useEffect(() => {
+    if (!isOpen) {
+      return
     }
-  }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      closeModal()
-    } else if (e.key === 'ArrowRight') {
-      nextPhoto()
-    } else if (e.key === 'ArrowLeft') {
-      prevPhoto()
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedPhoto(null)
+        setCurrentIndex(0)
+      } else if (e.key === 'ArrowRight') {
+        setCurrentIndex(prev => {
+          const next = Math.min(prev + 1, photos.length - 1)
+          setSelectedPhoto(photos[next])
+          return next
+        })
+      } else if (e.key === 'ArrowLeft') {
+        setCurrentIndex(prev => {
+          const next = Math.max(prev - 1, 0)
+          setSelectedPhoto(photos[next])
+          return next
+        })
+      }
     }
-  }
+
+    document.addEventListener('keydown', handleKeyDown)
+    overlayRef.current?.focus()
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, photos])
 
   if (photos.length === 0) {
     return (
@@ -58,20 +86,93 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
     )
   }
 
+  const modal = selectedPhoto && (
+    <div
+      ref={overlayRef}
+      className="photo-modal-overlay"
+      onClick={closeModal}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Photo viewer"
+    >
+      <div className="photo-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="photo-modal-header">
+          <div className="photo-modal-info">
+            <span className="photo-counter">
+              {currentIndex + 1} of {photos.length}
+            </span>
+            {selectedPhoto.caption && (
+              <span className="photo-caption-modal">{selectedPhoto.caption}</span>
+            )}
+          </div>
+          <button
+            type="button"
+            className="photo-modal-close"
+            onClick={closeModal}
+            aria-label="Close photo viewer"
+          >
+            <i className="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div className="photo-modal-body">
+          <img
+            src={selectedPhoto.url}
+            alt={selectedPhoto.caption || `Trip photo ${currentIndex + 1}`}
+            className="photo-modal-image"
+          />
+        </div>
+
+        {photos.length > 1 && (
+          <div className="photo-modal-navigation">
+            <button
+              type="button"
+              className="photo-nav-btn photo-prev-btn"
+              onClick={() => goToIndex(currentIndex - 1)}
+              disabled={currentIndex === 0}
+              aria-label="Previous photo"
+            >
+              <i className="fas fa-chevron-left"></i>
+            </button>
+            <button
+              type="button"
+              className="photo-nav-btn photo-next-btn"
+              onClick={() => goToIndex(currentIndex + 1)}
+              disabled={currentIndex === photos.length - 1}
+              aria-label="Next photo"
+            >
+              <i className="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
   return (
     <div className={`photo-gallery ${className}`}>
       {title && <h3 className="gallery-title">{title}</h3>}
-      
+
       <div className="photo-grid">
         {photos.map((photo, index) => (
-          <div 
-            key={photo.id} 
+          <div
+            key={photo.id}
             className="photo-item"
             onClick={() => openModal(photo, index)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                openModal(photo, index)
+              }
+            }}
+            aria-label={`View ${photo.caption || `photo ${index + 1}`} full screen`}
           >
             <div className="photo-thumbnail">
-              <img 
-                src={photo.thumbnailUrl || photo.url} 
+              <img
+                src={photo.thumbnailUrl || photo.url}
                 alt={photo.caption || `Trip photo ${index + 1}`}
                 loading="lazy"
               />
@@ -83,53 +184,7 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
         ))}
       </div>
 
-      {/* Modal */}
-      {selectedPhoto && (
-        <div 
-          className="photo-modal-overlay"
-          onClick={closeModal}
-          onKeyDown={handleKeyDown}
-          tabIndex={0}
-        >
-          <div className="photo-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-info">
-                <span className="photo-counter">
-                  {currentIndex + 1} of {photos.length}
-                </span>
-              </div>
-              <button className="modal-close" onClick={closeModal}>
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-            
-            <div className="modal-content">
-              <img 
-                src={selectedPhoto.url} 
-                alt={selectedPhoto.caption || `Trip photo ${currentIndex + 1}`}
-                className="modal-image"
-              />
-            </div>
-
-            <div className="modal-navigation">
-              <button 
-                className="nav-btn prev-btn" 
-                onClick={prevPhoto}
-                disabled={currentIndex === 0}
-              >
-                <i className="fas fa-chevron-left"></i>
-              </button>
-              <button 
-                className="nav-btn next-btn" 
-                onClick={nextPhoto}
-                disabled={currentIndex === photos.length - 1}
-              >
-                <i className="fas fa-chevron-right"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {mounted && modal ? createPortal(modal, document.body) : null}
     </div>
   )
 }
