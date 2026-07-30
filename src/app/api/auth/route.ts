@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminPassword, setSessionCookie } from '@/lib/session'
+import { cookies } from 'next/headers'
+import {
+  ADMIN_SESSION_COOKIE,
+  getAdminPassword,
+  isValidSessionToken,
+  setSessionCookie
+} from '@/lib/session'
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,6 +49,6 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  const { hasServerSession } = await import('@/lib/session')
-  return NextResponse.json({ authenticated: await hasServerSession() })
+  const token = cookies().get(ADMIN_SESSION_COOKIE)?.value
+  return NextResponse.json({ authenticated: await isValidSessionToken(token) })
 }

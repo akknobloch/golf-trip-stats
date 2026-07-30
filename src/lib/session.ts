@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 
 export const ADMIN_SESSION_COOKIE = 'golf_admin_session'
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
@@ -67,9 +66,4 @@ export function clearSessionCookie(response: NextResponse): void {
     path: '/',
     maxAge: 0
   })
-}
-
-export async function hasServerSession(): Promise<boolean> {
-  const token = cookies().get(ADMIN_SESSION_COOKIE)?.value
-  return isValidSessionToken(token)
 }

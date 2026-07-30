@@ -24,9 +24,9 @@ In the Vercel dashboard, go to your project settings and add these environment v
 
 ```
 ADMIN_PASSWORD=your_secure_password_here
-NODE_ENV=production
-CUSTOM_KEY=your_custom_key_here (optional)
 ```
+
+`ADMIN_PASSWORD` is required. Auth fails closed if it is missing or still set to the placeholder. Vercel sets `NODE_ENV` automatically; do not add it yourself.
 
 ### 4. Deploy
 Click "Deploy" and Vercel will automatically:
@@ -37,11 +37,11 @@ Click "Deploy" and Vercel will automatically:
 ## Environment Variables Setup
 
 ### Required Variables
-- `ADMIN_PASSWORD`: Set a secure password for admin access
-- `NODE_ENV`: Set to `production`
+- `ADMIN_PASSWORD`: Secure password for admin access (Production and Preview)
 
-### Optional Variables
-- `CUSTOM_KEY`: Additional security key (if used in your app)
+### Notes
+- Do not enable GitHub Pages for this repo. Next.js API routes and middleware need Vercel (or another Node host).
+- Point `golftrip.akknobloch.com` at the Vercel project in Project Settings → Domains.
 
 ## Custom Domain (Optional)
 1. In Vercel dashboard, go to "Domains"
