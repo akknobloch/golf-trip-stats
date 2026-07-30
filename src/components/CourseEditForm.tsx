@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Course } from '@/lib/types'
 
 interface CourseEditFormProps {
@@ -11,6 +12,7 @@ interface CourseEditFormProps {
 }
 
 export default function CourseEditForm({ course, onSave, onCancel, isEditing = false }: CourseEditFormProps) {
+  const [mounted, setMounted] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     location: '',
@@ -19,6 +21,10 @@ export default function CourseEditForm({ course, onSave, onCancel, isEditing = f
     imageUrl: '',
     lastPlayed: ''
   })
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (course) {
@@ -57,8 +63,10 @@ export default function CourseEditForm({ course, onSave, onCancel, isEditing = f
     onSave(courseData)
   }
 
-  return (
-    <div className="edit-form-overlay">
+  if (!mounted) return null
+
+  return createPortal(
+    <div className="edit-form-overlay" role="dialog" aria-modal="true">
       <div className="edit-form">
         <div className="edit-form-header">
           <h3>{isEditing ? 'Edit Course' : 'Add New Course'}</h3>
@@ -147,6 +155,7 @@ export default function CourseEditForm({ course, onSave, onCancel, isEditing = f
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

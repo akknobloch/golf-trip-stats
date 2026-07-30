@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Player, Stats, Course, Trip, Round } from '@/lib/types'
-import { calculateStats, getAvailableYears, calculatePlayerStats, calculateCourseTimesPlayed } from '@/lib/utils'
+import { calculateStats, calculatePlayerStats, calculateCourseTimesPlayed } from '@/lib/utils'
 import { getData } from '../lib/data'
 import Link from 'next/link'
 import TabbedContainer from '@/components/TabbedContainer'
 import ParallaxCard from '@/components/ParallaxCard'
+import PageShell from '@/components/PageShell'
+import EmptyState from '@/components/EmptyState'
 
 export default function Home() {
   const [players, setPlayers] = useState<Player[]>([])
@@ -29,6 +31,7 @@ export default function Home() {
     courses: Course[]
   }>({ trips: [], players: [], courses: [] })
   const [showSearchResults, setShowSearchResults] = useState(false)
+  const searchSectionRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     // Load data from static source or localStorage
@@ -58,6 +61,29 @@ export default function Home() {
       totalTrips: trips.length
     })
   }, [players, courses, trips, rounds])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSearchQuery('')
+        setSearchResults({ trips: [], players: [], courses: [] })
+        setShowSearchResults(false)
+      }
+    }
+
+    const onPointerDown = (event: MouseEvent) => {
+      if (!searchSectionRef.current?.contains(event.target as Node)) {
+        setShowSearchResults(false)
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    document.addEventListener('mousedown', onPointerDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.removeEventListener('mousedown', onPointerDown)
+    }
+  }, [])
 
   // Search functionality
   const performSearch = (query: string) => {
@@ -105,7 +131,6 @@ export default function Home() {
     setShowSearchResults(false)
   }
 
-  const availableYears = getAvailableYears(rounds)
   const sortedTrips = [...trips].sort((a, b) => new Date(b.startDate).getFullYear() - new Date(a.startDate).getFullYear())
   const sortedCourses = [...courses].sort((a, b) => {
     const aTimesPlayed = calculateCourseTimesPlayed(a.id, rounds)
@@ -155,135 +180,137 @@ export default function Home() {
     : null
 
   return (
-    <div className="container">
-      <header className="header">
-        <div className="header-content">
-          <h1><i className="fas fa-golf-ball"></i> Golf Trip Dashboard</h1>
-          <p>Historical results and statistics from our annual golf trips</p>
-          {process.env.NODE_ENV === 'development' && (
-            <div className="admin-link">
-              <Link href="/admin" className="btn btn-secondary">
-                <i className="fas fa-cog"></i> Admin Panel
-              </Link>
-            </div>
-          )}
-        </div>
-      </header>
-
-      <main className="main-content">
-
+    <PageShell
+      title="Golf Trip Dashboard"
+      icon="fa-golf-ball"
+      subtitle="Historical results and statistics from our annual golf trips"
+      actions={process.env.NODE_ENV === 'development' ? (
+        <Link href="/admin" className="btn btn-secondary">
+          <i className="fas fa-cog" aria-hidden="true"></i> Admin
+        </Link>
+      ) : undefined}
+    >
         {/* Search Bar */}
-        <div className="search-section">
+        <div className="search-section" ref={searchSectionRef}>
           <div className="search-container">
             <div className="search-input-wrapper">
-              <i className="fas fa-search search-icon"></i>
+              <i className="fas fa-search search-icon" aria-hidden="true"></i>
+              <label htmlFor="site-search" className="visually-hidden">
+                Search trips, players, or courses
+              </label>
               <input
-                type="text"
+                id="site-search"
+                type="search"
                 placeholder="Search trips, players, or courses..."
                 value={searchQuery}
                 onChange={handleSearchChange}
+                onFocus={() => {
+                  if (searchQuery.trim()) setShowSearchResults(true)
+                }}
                 className="search-input"
+                autoComplete="off"
               />
               {searchQuery && (
-                <button onClick={clearSearch} className="search-clear">
-                  <i className="fas fa-times"></i>
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="search-clear"
+                  aria-label="Clear search"
+                >
+                  <i className="fas fa-times" aria-hidden="true"></i>
                 </button>
               )}
             </div>
-          </div>
 
-          {/* Search Results */}
-          {showSearchResults && (
-            <div className="search-results">
-              <div className="search-results-header">
-                <h3>Search Results</h3>
-                <button onClick={clearSearch} className="close-search">
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
-              
-              {searchResults.trips.length === 0 && 
-               searchResults.players.length === 0 && 
-               searchResults.courses.length === 0 ? (
-                <div className="no-results">
-                  <p>No results found for "{searchQuery}"</p>
+            {showSearchResults && (
+              <div className="search-results">
+                <div className="search-results-header">
+                  <h3>Search Results</h3>
+                  <button type="button" onClick={clearSearch} className="close-search" aria-label="Close search results">
+                    <i className="fas fa-times" aria-hidden="true"></i>
+                  </button>
                 </div>
-              ) : (
-                <div className="search-results-content">
-                  {/* Trips Results */}
-                  {searchResults.trips.length > 0 && (
-                    <div className="search-category">
-                      <h4><i className="fas fa-plane"></i> Trips ({searchResults.trips.length})</h4>
-                      <div className="search-items">
-                        {searchResults.trips.map(trip => {
-                          const tripYear = new Date(trip.startDate).getFullYear()
-                          return (
+                
+                {searchResults.trips.length === 0 && 
+                 searchResults.players.length === 0 && 
+                 searchResults.courses.length === 0 ? (
+                  <div className="no-results">
+                    <p>No results found for "{searchQuery}"</p>
+                  </div>
+                ) : (
+                  <div className="search-results-content">
+                    {searchResults.trips.length > 0 && (
+                      <div className="search-category">
+                        <h4><i className="fas fa-plane"></i> Trips ({searchResults.trips.length})</h4>
+                        <div className="search-items">
+                          {searchResults.trips.map(trip => {
+                            const tripYear = new Date(trip.startDate).getFullYear()
+                            return (
+                              <Link 
+                                key={trip.id} 
+                                href={`/trips/${trip.id}`}
+                                className="search-item"
+                                onClick={clearSearch}
+                              >
+                                <div className="search-item-content">
+                                  <div className="search-item-title">{trip.location}</div>
+                                  <div className="search-item-subtitle">{tripYear}</div>
+                                </div>
+                                <i className="fas fa-arrow-right"></i>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {searchResults.players.length > 0 && (
+                      <div className="search-category">
+                        <h4><i className="fas fa-user"></i> Players ({searchResults.players.length})</h4>
+                        <div className="search-items">
+                          {searchResults.players.map(player => (
                             <Link 
-                              key={trip.id} 
-                              href={`/trips/${trip.id}`}
+                              key={player.id} 
+                              href={`/players/${player.id}`}
                               className="search-item"
                               onClick={clearSearch}
                             >
                               <div className="search-item-content">
-                                <div className="search-item-title">{trip.location}</div>
-                                <div className="search-item-subtitle">{tripYear}</div>
+                                <div className="search-item-title">{player.name}</div>
                               </div>
                               <i className="fas fa-arrow-right"></i>
                             </Link>
-                          )
-                        })}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Players Results */}
-                  {searchResults.players.length > 0 && (
-                    <div className="search-category">
-                      <h4><i className="fas fa-user"></i> Players ({searchResults.players.length})</h4>
-                      <div className="search-items">
-                        {searchResults.players.map(player => (
-                          <Link 
-                            key={player.id} 
-                            href={`/players/${player.id}`}
-                            className="search-item"
-                            onClick={clearSearch}
-                          >
-                            <div className="search-item-content">
-                              <div className="search-item-title">{player.name}</div>
-                            </div>
-                            <i className="fas fa-arrow-right"></i>
-                          </Link>
-                        ))}
+                    {searchResults.courses.length > 0 && (
+                      <div className="search-category">
+                        <h4><i className="fas fa-map-marker-alt"></i> Courses ({searchResults.courses.length})</h4>
+                        <div className="search-items">
+                          {searchResults.courses.map(course => (
+                            <Link 
+                              key={course.id} 
+                              href={`/courses/${course.id}`}
+                              className="search-item"
+                              onClick={clearSearch}
+                            >
+                              <div className="search-item-content">
+                                <div className="search-item-title">{course.name}</div>
+                                <div className="search-item-subtitle">{course.location} • Par {course.par}</div>
+                              </div>
+                              <i className="fas fa-arrow-right"></i>
+                            </Link>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Courses Results */}
-                  {searchResults.courses.length > 0 && (
-                    <div className="search-category">
-                      <h4><i className="fas fa-map-marker-alt"></i> Courses ({searchResults.courses.length})</h4>
-                      <div className="search-items">
-                        {searchResults.courses.map(course => (
-                          <Link 
-                            key={course.id} 
-                            href={`/courses/${course.id}`}
-                            className="search-item"
-                            onClick={clearSearch}
-                          >
-                            <div className="search-item-content">
-                              <div className="search-item-title">{course.name}</div>
-                              <div className="search-item-subtitle">{course.location} • Par {course.par}</div>
-                            </div>
-                            <i className="fas fa-arrow-right"></i>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Stats Overview */}
@@ -307,7 +334,7 @@ export default function Home() {
                 <i className="fas fa-users"></i>
               </div>
               <div className="stat-content">
-                <h3>{stats.totalPlayers}</h3>
+                <span className="stat-value">{stats.totalPlayers}</span>
                 <p>Total Players</p>
               </div>
             </div>
@@ -317,7 +344,7 @@ export default function Home() {
                 <i className="fas fa-trophy"></i>
               </div>
               <div className="stat-content">
-                <h3>{stats.bestAverage}</h3>
+                <span className="stat-value">{stats.bestAverage}</span>
                 <p>Best Average</p>
                 {stats.bestAveragePlayer && (
                   <small title={stats.bestAveragePlayer}>{stats.bestAveragePlayer}</small>
@@ -330,7 +357,7 @@ export default function Home() {
                   <i className="fas fa-star"></i>
                 </div>
                 <div className="stat-content">
-                  <h3>{stats.bestScore}</h3>
+                  <span className="stat-value">{stats.bestScore}</span>
                   <p>Best Single Score</p>
                   {stats.bestScorePlayer && (
                     <small title={`${stats.bestScorePlayer} (${stats.bestScoreYear})`}>
@@ -346,7 +373,7 @@ export default function Home() {
                 <i className="fas fa-map-marker-alt"></i>
               </div>
               <div className="stat-content">
-                <h3>{stats.totalTrips}</h3>
+                <span className="stat-value">{stats.totalTrips}</span>
                 <p>Total Trips</p>
               </div>
             </div>
@@ -404,7 +431,7 @@ export default function Home() {
                       
                       return (
                         <Link key={trip.id} href={`/trips/${trip.id}`} className="trip-card-link">
-                          <ParallaxCard className="trip-card" intensity={8} rotationIntensity={2}>
+                          <ParallaxCard className="trip-card" intensity={5} rotationIntensity={1.5}>
                             {/* Trip Photo Thumbnail */}
                             <div className="trip-photo-thumbnail">
                               {trip.photos && trip.photos.length > 0 ? (
@@ -422,8 +449,8 @@ export default function Home() {
                               ) : (
                                 <>
                                   <div className="trip-photo-placeholder">
-                                    <span className="golf-emoji">🏌️</span>
-                                    <span className="fore-text">Fore!</span>
+                                    <i className="fas fa-golf-ball" aria-hidden="true"></i>
+                                    <span className="fore-text">{new Date(trip.startDate).getFullYear()}</span>
                                   </div>
                                   <div className="photo-count placeholder">
                                     <i className="fas fa-camera"></i>
@@ -446,7 +473,7 @@ export default function Home() {
                             </div>
                             <div className="trip-details">
                               <p><i className="fas fa-users"></i> {totalTripPlayers} players</p>
-                              <p><i className="fas fa-trophy"></i> {trip.championPlayerId ? players.find(p => p.id === trip.championPlayerId)?.name || 'Unknown' : 'Unknown'}</p>
+                              <p><i className="fas fa-trophy"></i> {trip.championPlayerId ? players.find(p => p.id === trip.championPlayerId)?.name || 'TBD' : 'TBD'}</p>
                             </div>
                           </ParallaxCard>
                         </Link>
@@ -455,9 +482,11 @@ export default function Home() {
                   </div>
                 </div>
               ) : (
-                <div className="empty-state">
-                  <p>No trips found. Add some trips in the admin panel to get started.</p>
-                </div>
+                <EmptyState
+                  title="No trips yet"
+                  description="Trip results will show up here once trips are added."
+                  icon="fa-plane"
+                />
               )
             },
             {
@@ -479,7 +508,7 @@ export default function Home() {
                         const championshipCount = trips.filter(trip => trip.championPlayerId === player.id).length
                         return (
                         <Link key={player.id} href={`/players/${player.id}`} className="player-card-link">
-                          <ParallaxCard className="player-card" intensity={12} rotationIntensity={4}>
+                          <ParallaxCard className="player-card" intensity={6} rotationIntensity={2}>
                             <div className="player-header">
                               <div className='player-header_group'>
                                 <div className="player-rank">#{index + 1}</div>
@@ -532,20 +561,22 @@ export default function Home() {
                   </div>
                 </div>
               ) : (
-                <div className="empty-state">
-                  <p>No players found. Add some players in the admin panel to get started.</p>
-                </div>
+                <EmptyState
+                  title="No players yet"
+                  description="Player results will show up here once players are added."
+                  icon="fa-users"
+                />
               )
             },
             {
               id: 'courses-played',
-              label: 'Courses Played',
+              label: 'Courses',
               content: sortedCourses.length > 0 ? (
                 <div className="courses-section">
                   <div className="courses-grid">
                     {sortedCourses.map(course => (
                       <Link key={course.id} href={`/courses/${course.id}`} className="course-card-link">
-                        <ParallaxCard className="course-card" intensity={8} rotationIntensity={2}>
+                        <ParallaxCard className="course-card" intensity={5} rotationIntensity={1.5}>
                           <div className="course-header">
                             <h3 title={course.name}>{course.name}</h3>
                             <div className="course-header-right">
@@ -568,13 +599,13 @@ export default function Home() {
                             </p>
                               <div className="course-tags">
                                 {course.id === hardestCourseId && (
-                                  <span className="course-tag course-tag-hardest">🔥 Hardest</span>
+                                  <span className="course-tag course-tag-hardest">Hardest</span>
                                 )}
                                 {course.id === easiestCourseId && (
-                                  <span className="course-tag course-tag-easiest">🪶 Easiest</span>
+                                  <span className="course-tag course-tag-easiest">Easiest</span>
                                 )}
                                 {course.id === mostVarianceCourseId && (
-                                  <span className="course-tag course-tag-variance">🎢 Most Variance</span>
+                                  <span className="course-tag course-tag-variance">Most Variance</span>
                                 )}
                               </div>
                             </div>
@@ -588,14 +619,15 @@ export default function Home() {
                   </div>
                 </div>
               ) : (
-                <div className="empty-state">
-                  <p>No courses found. Add some courses in the admin panel to get started.</p>
-                </div>
+                <EmptyState
+                  title="No courses yet"
+                  description="Course results will show up here once courses are added."
+                  icon="fa-flag"
+                />
               )
             }
           ]}
         />
-      </main>
-    </div>
+    </PageShell>
   )
 }

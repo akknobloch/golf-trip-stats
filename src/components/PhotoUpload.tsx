@@ -83,6 +83,7 @@ export default function PhotoUpload({ onPhotosAdded, existingPhotos = [], classN
       const objectUrl = URL.createObjectURL(file)
 
       img.onload = () => {
+
         let { width, height } = img
 
         if (width > height) {

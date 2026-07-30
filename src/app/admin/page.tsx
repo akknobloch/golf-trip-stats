@@ -59,23 +59,33 @@ export default function Admin() {
   ])
 
   useEffect(() => {
-    // Check authentication in production
-    if (!requireAuth()) {
-      router.push('/admin/login')
-      return
-    }
+    let cancelled = false
 
-    // Load static data
-    const loadData = () => {
+    const load = async () => {
+      const ok = await requireAuth()
+      if (cancelled) return
+      if (!ok) {
+        router.push('/admin/login')
+        return
+      }
+
       const data = getStaticData()
       setPlayers(data.players)
       setCourses(data.courses)
       setTrips(data.trips)
       setRounds(data.rounds)
     }
-    
-    loadData()
+
+    load()
+    return () => {
+      cancelled = true
+    }
   }, [router])
+
+  const handleLogout = async () => {
+    await logout()
+    router.push('/admin/login')
+  }
 
   // Load editor content when editor tab is opened
   useEffect(() => {
@@ -177,11 +187,11 @@ export const staticRounds: Round[] = ${JSON.stringify(rounds, null, 2)}
     try {
       const response = await fetch('/api/admin/save-data', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: editorContent,
           data: validation.data
         })
       })
@@ -368,28 +378,13 @@ player2,trip1,course1,78,2024-06-15,2024,Personal best`
         trips: sanitizedTrips
       }
 
-      const content = `import { Player, Course, Trip, Round } from '@/lib/types'
-
-// Static data for public deployment
-// This data will be embedded in the application and served statically
-// Update this file when you want to update the public data
-
-export const staticPlayers: Player[] = ${JSON.stringify(sanitizedData.players, null, 2)}
-
-export const staticCourses: Course[] = ${JSON.stringify(sanitizedData.courses, null, 2)}
-
-export const staticTrips: Trip[] = ${JSON.stringify(sanitizedData.trips, null, 2)}
-
-export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null, 2)}
-`
-
       const response = await fetch('/api/admin/save-data', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content,
           data: sanitizedData
         })
       })
@@ -748,63 +743,87 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
       />
       <header className="header">
         <div className="header-content">
-          <h1><i className="fas fa-cog"></i> Admin Panel</h1>
-          <p>Manage static data for public deployment</p>
+          <h1>
+            <i className="fas fa-cog" aria-hidden="true"></i>
+            Admin
+          </h1>
+          <p className="header-subtitle">Update golf trip data</p>
           <div className="admin-links">
             <Link href="/" className="btn btn-secondary">
-              <i className="fas fa-home"></i> Home
+              Dashboard
             </Link>
-            <Link href="/dashboard" className="btn btn-secondary">
-              <i className="fas fa-chart-bar"></i> Dashboard
-            </Link>
+            <button type="button" className="btn btn-secondary" onClick={handleLogout}>
+              Logout
+            </button>
           </div>
         </div>
       </header>
 
       <main className="main-content">
         {/* Tab Navigation */}
-        <div className="admin-tabs">
+        <div className="admin-tabs" role="tablist" aria-label="Admin sections">
           <button 
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'overview'}
             className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
             onClick={() => setActiveTab('overview')}
           >
-            <i className="fas fa-chart-pie"></i> Overview
+            <i className="fas fa-chart-pie" aria-hidden="true"></i> Overview
           </button>
           <button 
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'players'}
             className={`tab-btn ${activeTab === 'players' ? 'active' : ''}`}
             onClick={() => setActiveTab('players')}
           >
-            <i className="fas fa-users"></i> Players ({players.length})
+            <i className="fas fa-users" aria-hidden="true"></i> Players ({players.length})
           </button>
           <button 
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'courses'}
             className={`tab-btn ${activeTab === 'courses' ? 'active' : ''}`}
             onClick={() => setActiveTab('courses')}
           >
-            <i className="fas fa-flag"></i> Courses ({courses.length})
+            <i className="fas fa-flag" aria-hidden="true"></i> Courses ({courses.length})
           </button>
           <button 
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'trips'}
             className={`tab-btn ${activeTab === 'trips' ? 'active' : ''}`}
             onClick={() => setActiveTab('trips')}
           >
-            <i className="fas fa-map-marker-alt"></i> Trips ({trips.length})
+            <i className="fas fa-map-marker-alt" aria-hidden="true"></i> Trips ({trips.length})
           </button>
           <button 
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'rounds'}
             className={`tab-btn ${activeTab === 'rounds' ? 'active' : ''}`}
             onClick={() => setActiveTab('rounds')}
           >
-            <i className="fas fa-golf-ball"></i> Rounds ({rounds.length})
+            <i className="fas fa-golf-ball" aria-hidden="true"></i> Rounds ({rounds.length})
           </button>
           <button 
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'export'}
             className={`tab-btn ${activeTab === 'export' ? 'active' : ''}`}
             onClick={() => setActiveTab('export')}
           >
-            <i className="fas fa-download"></i> Export/Import
+            <i className="fas fa-download" aria-hidden="true"></i> Export/Import
           </button>
           <button 
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'editor'}
             className={`tab-btn ${activeTab === 'editor' ? 'active' : ''}`}
             onClick={() => setActiveTab('editor')}
           >
-            <i className="fas fa-edit"></i> Direct Editor
+            <i className="fas fa-edit" aria-hidden="true"></i> Direct Editor
           </button>
         </div>
 
@@ -812,7 +831,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
         {activeTab === 'overview' && (
           <div className="admin-section">
             <div className="section-header">
-              <h2>Data Overview</h2>
+              <h2 className="section-title">Data Overview</h2>
             </div>
             
             <div className="overview-grid">
@@ -844,7 +863,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
                 <h3><i className="fas fa-golf-ball"></i> Rounds</h3>
                 <div className="overview-stats">
                   <p><strong>Total:</strong> {rounds.length}</p>
-                  <p><strong>Average Score:</strong> {Math.round(rounds.reduce((sum, r) => sum + r.score, 0) / rounds.length)}</p>
+                  <p><strong>Average Score:</strong> {rounds.length > 0 ? Math.round(rounds.reduce((sum, r) => sum + r.score, 0) / rounds.length) : '—'}</p>
                 </div>
               </div>
             </div>
@@ -868,7 +887,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
         {activeTab === 'players' && (
           <div className="admin-section">
             <div className="section-header">
-              <h2>Players</h2>
+              <h2 className="section-title">Players</h2>
               <button 
                 onClick={() => setShowAddForm('player')}
                 className="btn btn-primary"
@@ -944,7 +963,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
         {activeTab === 'courses' && (
           <div className="admin-section">
             <div className="section-header">
-              <h2>Courses</h2>
+              <h2 className="section-title">Courses</h2>
               <button 
                 onClick={() => setShowAddForm('course')}
                 className="btn btn-primary"
@@ -1020,7 +1039,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
         {activeTab === 'trips' && (
           <div className="admin-section">
             <div className="section-header">
-              <h2>Trips</h2>
+              <h2 className="section-title">Trips</h2>
               <button 
                 onClick={() => setShowAddForm('trip')}
                 className="btn btn-primary"
@@ -1120,7 +1139,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
         {activeTab === 'rounds' && (
           <div className="admin-section">
             <div className="section-header">
-              <h2>Rounds</h2>
+              <h2 className="section-title">Rounds</h2>
               <button 
                 onClick={() => setShowAddForm('round')}
                 className="btn btn-primary"
@@ -1268,7 +1287,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
         {activeTab === 'export' && (
           <div className="admin-section">
             <div className="section-header">
-              <h2>Export & Import Data</h2>
+              <h2 className="section-title">Export & Import Data</h2>
             </div>
             
             <div className="export-section">
@@ -1326,7 +1345,7 @@ export const staticRounds: Round[] = ${JSON.stringify(sanitizedData.rounds, null
         {activeTab === 'editor' && (
           <div className="admin-section">
             <div className="section-header">
-              <h2>Direct File Editor</h2>
+              <h2 className="section-title">Direct File Editor</h2>
               <div className="section-actions">
                 <button 
                   onClick={loadEditorContent}

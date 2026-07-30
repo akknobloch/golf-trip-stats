@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Round, Player, Course, Trip } from '@/lib/types'
 
 interface RoundEditFormProps {
@@ -14,6 +15,7 @@ interface RoundEditFormProps {
 }
 
 export default function RoundEditForm({ round, players, courses, trips, onSave, onCancel, isEditing = false }: RoundEditFormProps) {
+  const [mounted, setMounted] = useState(false)
   const [formData, setFormData] = useState({
     playerId: '',
     tripId: '',
@@ -23,6 +25,10 @@ export default function RoundEditForm({ round, players, courses, trips, onSave, 
     year: new Date().getFullYear(),
     notes: ''
   })
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (round) {
@@ -71,8 +77,10 @@ export default function RoundEditForm({ round, players, courses, trips, onSave, 
     onSave(formData)
   }
 
-  return (
-    <div className="edit-form-overlay">
+  if (!mounted) return null
+
+  return createPortal(
+    <div className="edit-form-overlay" role="dialog" aria-modal="true">
       <div className="edit-form">
         <div className="edit-form-header">
           <h3>{isEditing ? 'Edit Round' : 'Add New Round'}</h3>
@@ -195,7 +203,8 @@ export default function RoundEditForm({ round, players, courses, trips, onSave, 
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

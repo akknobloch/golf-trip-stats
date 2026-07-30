@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Trip, Player, TripPhoto } from '@/lib/types'
 import PhotoUpload from './PhotoUpload'
 
@@ -14,6 +15,7 @@ interface TripEditFormProps {
 }
 
 export default function TripEditForm({ trip, players, trips = [], onSave, onCancel, isEditing = false }: TripEditFormProps) {
+  const [mounted, setMounted] = useState(false)
   const [formData, setFormData] = useState({
     startDate: '',
     endDate: '',
@@ -25,6 +27,10 @@ export default function TripEditForm({ trip, players, trips = [], onSave, onCanc
     attendees: [] as string[]
   })
   const [photos, setPhotos] = useState<TripPhoto[]>([])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (trip) {
@@ -82,8 +88,10 @@ export default function TripEditForm({ trip, players, trips = [], onSave, onCanc
     new Set(trips.map(existingTrip => existingTrip.location.trim()).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b))
 
-  return (
-    <div className="edit-form-overlay">
+  if (!mounted) return null
+
+  return createPortal(
+    <div className="edit-form-overlay" role="dialog" aria-modal="true">
       <div className="edit-form">
         <div className="edit-form-header">
           <h3>{isEditing ? 'Edit Trip' : 'Add New Trip'}</h3>
@@ -221,7 +229,8 @@ export default function TripEditForm({ trip, players, trips = [], onSave, onCanc
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

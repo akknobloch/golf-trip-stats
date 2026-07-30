@@ -68,7 +68,9 @@ export default function Toast({ message, type, isVisible, onClose }: ToastProps)
           </span>
         </div>
         <button
+          type="button"
           onClick={onClose}
+          aria-label="Dismiss notification"
           style={{
             background: 'none',
             border: 'none',
@@ -89,7 +91,7 @@ export default function Toast({ message, type, isVisible, onClose }: ToastProps)
             e.currentTarget.style.background = 'none'
           }}
         >
-          <i className="fas fa-times" style={{ fontSize: '1rem' }}></i>
+          <i className="fas fa-times" style={{ fontSize: '1rem' }} aria-hidden="true"></i>
         </button>
       </div>
       

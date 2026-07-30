@@ -6,6 +6,9 @@ import { Course, Round, Player, Trip } from '@/lib/types'
 import { calculateCourseStats } from '@/lib/utils'
 import { getData } from '../../../lib/data'
 import Link from 'next/link'
+import PageShell from '@/components/PageShell'
+import EmptyState from '@/components/EmptyState'
+import LoadingState from '@/components/LoadingState'
 
 
 
@@ -69,38 +72,35 @@ export default function CourseDetails() {
 
   if (loading) {
     return (
-      <div className="container">
-        <div className="loading">Loading course details...</div>
-      </div>
+      <PageShell title="Course" backHref="/">
+        <LoadingState label="Loading course..." />
+      </PageShell>
     )
   }
 
   if (!course) {
     return (
-      <div className="container">
-        <div className="error">Course not found</div>
-      </div>
+      <PageShell title="Course not found" backHref="/">
+        <EmptyState
+          title="Course not found"
+          description="This course may have been removed or the link is out of date."
+          icon="fa-flag"
+          actionHref="/"
+        />
+      </PageShell>
     )
   }
 
   return (
-    <div className="container">
-      <header className="header">
-        <div className="header-content">
-          <div className="header-top">
-            <Link href="/" className="back-link">
-              <i className="fas fa-arrow-left" aria-hidden="true"></i> Dashboard
-            </Link>
-          </div>
-          <h1><i className="fas fa-flag"></i> {course.name}</h1>
-          <p>{course.location} • Par {course.par}</p>
-          {course.description && (
-            <p className="course-description">{course.description}</p>
-          )}
-        </div>
-      </header>
-
-      <main className="main-content">
+    <PageShell
+      title={course.name}
+      icon="fa-flag"
+      backHref="/"
+      subtitle={`${course.location} · Par ${course.par}`}
+    >
+        {course.description ? (
+          <p className="page-note">{course.description}</p>
+        ) : null}
 
         {/* Score Highlights */}
         {courseStats && (
@@ -110,7 +110,7 @@ export default function CourseDetails() {
                 <i className="fas fa-trophy"></i>
               </div>
               <div className="highlight-content">
-                <h3>{courseStats.averageScore}</h3>
+                <span className="stat-value">{courseStats.averageScore}</span>
                 <p>Average Score</p>
                 <small title="All players combined">All players combined</small>
               </div>
@@ -121,7 +121,7 @@ export default function CourseDetails() {
                 <i className="fas fa-star"></i>
               </div>
               <div className="highlight-content">
-                <h3>{courseStats.bestScore}</h3>
+                <span className="stat-value">{courseStats.bestScore}</span>
                 <p>Best Score</p>
                 {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.bestScore) && (
                   <small
@@ -140,7 +140,7 @@ export default function CourseDetails() {
                 <i className="fas fa-exclamation-triangle"></i>
               </div>
               <div className="highlight-content">
-                <h3>{courseStats.worstScore}</h3>
+                <span className="stat-value">{courseStats.worstScore}</span>
                 <p>Worst Score</p>
                 {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.worstScore) && (
                   <small
@@ -161,7 +161,7 @@ export default function CourseDetails() {
         {/* Trips Played */}
         {courseStats && courseStats.roundsWithPlayers.length > 0 && (
           <div className="trips-section">
-            <h2>Trips Played</h2>
+            <h2 className="section-title">Trips Played</h2>
             <div className="trips-grid">
               {Array.from(new Set(courseStats.roundsWithPlayers.map((r: any) => r.tripId)))
                 .map((tripId) => {
@@ -200,7 +200,6 @@ export default function CourseDetails() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </PageShell>
   )
 }

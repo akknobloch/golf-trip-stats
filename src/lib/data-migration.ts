@@ -63,12 +63,21 @@ export function mergePlayerRecords(
         : round
     )
 
-    // Update any trips that have the secondary player as champion
-    const updatedTrips = trips.map((trip: Trip) => 
-      trip.championPlayerId === secondaryPlayer.id 
-        ? { ...trip, championPlayerId: primaryPlayer.id }
-        : trip
-    )
+    // Update trips: champion + attendees references
+    const updatedTrips = trips.map((trip: Trip) => {
+      let next = trip
+      if (trip.championPlayerId === secondaryPlayer.id) {
+        next = { ...next, championPlayerId: primaryPlayer.id }
+      }
+      if (trip.attendees?.includes(secondaryPlayer.id)) {
+        const attendees = Array.from(new Set(
+          trip.attendees
+            .map(id => (id === secondaryPlayer.id ? primaryPlayer.id : id))
+        ))
+        next = { ...next, attendees }
+      }
+      return next
+    })
 
     // Remove the secondary player from players array
     const updatedPlayers = players.filter((p: Player) => p.id !== secondaryPlayer.id)

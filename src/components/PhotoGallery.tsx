@@ -176,7 +176,7 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
                 alt={photo.caption || `Trip photo ${index + 1}`}
                 loading="lazy"
               />
-              <div className="photo-overlay">
+              <div className="photo-overlay" aria-hidden="true">
                 <i className="fas fa-expand"></i>
               </div>
             </div>

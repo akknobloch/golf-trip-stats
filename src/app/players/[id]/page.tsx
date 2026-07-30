@@ -1,12 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Player, Course, Trip, Round } from '@/lib/types'
 import { calculatePlayerStats } from '@/lib/utils'
 import { getData } from '../../../lib/data'
 import SortableTable from '@/components/SortableTable'
+import PageShell from '@/components/PageShell'
+import EmptyState from '@/components/EmptyState'
+import LoadingState from '@/components/LoadingState'
 import { type ColumnDef } from '@tanstack/react-table'
 
 
@@ -51,7 +54,6 @@ interface PlayerRoundTableRow {
 
 export default function PlayerDetails() {
   const params = useParams()
-  const router = useRouter()
   const playerId = params.id as string
   
   const [player, setPlayer] = useState<Player | null>(null)
@@ -98,7 +100,7 @@ export default function PlayerDetails() {
   }, [playerId])
 
   useEffect(() => {
-    if (!player || courses.length === 0 || trips.length === 0 || rounds.length === 0) return
+    if (!player || courses.length === 0 || trips.length === 0) return
 
     // Get all rounds for this player
     const playerRoundData = rounds
@@ -210,29 +212,34 @@ export default function PlayerDetails() {
 
   if (loading) {
     return (
-      <div className="container">
-        <div className="loading">Loading player details...</div>
-      </div>
+      <PageShell title="Player" backHref="/">
+        <LoadingState label="Loading player..." />
+      </PageShell>
     )
   }
 
   if (!player) {
     return (
-      <div className="container">
-        <div className="error-message">
-          <h2>Player not found</h2>
-          <Link href="/" className="btn btn-primary">Back to Dashboard</Link>
-        </div>
-      </div>
+      <PageShell title="Player not found" backHref="/">
+        <EmptyState
+          title="Player not found"
+          description="This player may have been removed or the link is out of date."
+          icon="fa-user"
+          actionHref="/"
+        />
+      </PageShell>
     )
   }
 
   // Calculate player stats
   const playerStats = calculatePlayerStats(player, rounds, trips)
   const uniqueYears = Object.keys(yearStats).map(y => parseInt(y)).sort((a, b) => b - a)
-  const bestScore = Math.min(...playerRounds.map(pr => pr.round.score))
-  const worstScore = Math.max(...playerRounds.map(pr => pr.round.score))
-  const bestScoreRound = playerRounds.find(pr => pr.round.score === bestScore)
+  const scores = playerRounds.map(pr => pr.round.score)
+  const bestScore = scores.length > 0 ? Math.min(...scores) : null
+  const worstScore = scores.length > 0 ? Math.max(...scores) : null
+  const bestScoreRound = bestScore != null
+    ? playerRounds.find(pr => pr.round.score === bestScore)
+    : undefined
   const championshipCount = trips.filter(trip => trip.championPlayerId === playerId).length
   const roundsTableData: PlayerRoundTableRow[] = playerRounds.map(({ round, course, trip }) => {
     const toPar = round.score - course.par
@@ -284,24 +291,15 @@ export default function PlayerDetails() {
   ]
 
   return (
-    <div className="container">
-      <header className="header">
-        <div className="header-content">
-          <div className="header-top">
-            <Link href="/" className="back-link">
-              <i className="fas fa-arrow-left" aria-hidden="true"></i> Dashboard
-            </Link>
-          </div>
-          <h1><i className="fas fa-user"></i> {player.name}</h1>
-          <p>Golf Trip Statistics & Performance History</p>
-        </div>
-      </header>
-
-      <main className="main-content">
+    <PageShell
+      title={player.name}
+      icon="fa-user"
+      backHref="/"
+      className={championshipCount > 0 ? 'has-champion' : undefined}
+    >
         {championshipCount > 0 && (
           <div className="champion-section">
             <div className="champion-card">
-              <p className="champion-label">Champion</p>
               <div className="champion-player">
                 <h3>{championshipCount}x Trip Winner</h3>
               </div>
@@ -337,14 +335,14 @@ export default function PlayerDetails() {
 
         {/* Performance Stats */}
         <div className="performance-stats">
-          <h2>Performance Statistics</h2>
+          <h2 className="section-title">Performance Statistics</h2>
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-icon">
                 <i className="fas fa-chart-line"></i>
               </div>
               <div className="stat-content">
-                <h3>{playerStats.averageScore}</h3>
+                <span className="stat-value">{playerStats.averageScore}</span>
                 <p>Average Score</p>
               </div>
             </div>
@@ -354,7 +352,7 @@ export default function PlayerDetails() {
                 <i className="fas fa-star"></i>
               </div>
               <div className="stat-content">
-                <h3>{bestScore}</h3>
+                <span className="stat-value">{bestScore ?? '—'}</span>
                 <p>Best Round</p>
                 {bestScoreRound && (
                   <small title={`${bestScoreRound.course.name} (${bestScoreRound.round.year})`}>
@@ -369,7 +367,7 @@ export default function PlayerDetails() {
                 <i className="fas fa-chart-bar"></i>
               </div>
               <div className="stat-content">
-                <h3>{worstScore}</h3>
+                <span className="stat-value">{worstScore ?? '—'}</span>
                 <p>Worst Round</p>
               </div>
             </div>
@@ -379,7 +377,7 @@ export default function PlayerDetails() {
                 <i className="fas fa-arrows-alt-h"></i>
               </div>
               <div className="stat-content">
-                <h3>{worstScore - bestScore}</h3>
+                <span className="stat-value">{bestScore != null && worstScore != null ? worstScore - bestScore : '—'}</span>
                 <p>Score Range</p>
               </div>
             </div>
@@ -388,7 +386,7 @@ export default function PlayerDetails() {
 
         {/* All Rounds */}
         <div className="recent-rounds">
-          <h2>All Rounds</h2>
+          <h2 className="section-title">All Rounds</h2>
           <div className="recent-rounds-card">
             <div className="recent-rounds-header">
               <div className="recent-rounds-info">
@@ -428,7 +426,7 @@ export default function PlayerDetails() {
 
         {/* Course Performance */}
         <div className="course-performance">
-          <h2>Course Performance</h2>
+          <h2 className="section-title">Course Performance</h2>
           <div className="courses-grid">
             {courseStats.map((courseStat) => (
               <div key={courseStat.course.id} className="course-card">
@@ -462,7 +460,6 @@ export default function PlayerDetails() {
 
 
 
-      </main>
-    </div>
+    </PageShell>
   )
 }

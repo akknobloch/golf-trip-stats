@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Player, Course, Trip, Round } from '@/lib/types'
 import { formatDate, getDateValue, calculateTripDuration } from '@/lib/utils'
 import { getData } from '../../../lib/data'
 import PhotoGallery from '@/components/PhotoGallery'
 import SortableTable from '@/components/SortableTable'
+import PageShell from '@/components/PageShell'
+import EmptyState from '@/components/EmptyState'
+import LoadingState from '@/components/LoadingState'
 import { type ColumnDef } from '@tanstack/react-table'
 
 
@@ -53,7 +56,6 @@ interface CourseRoundRow {
 
 export default function TripDetails() {
   const params = useParams()
-  const router = useRouter()
   const tripId = params.id as string
   
   const [trip, setTrip] = useState<Trip | null>(null)
@@ -106,7 +108,7 @@ export default function TripDetails() {
   }, [tripId])
 
   useEffect(() => {
-    if (!trip || players.length === 0 || courses.length === 0 || rounds.length === 0) return
+    if (!trip || players.length === 0 || courses.length === 0) return
 
     // Get all rounds for this trip
     const tripRoundData = rounds
@@ -156,7 +158,7 @@ export default function TripDetails() {
       stats.worstScore = Math.max(stats.worstScore, round.score)
     })
 
-    // Add individual round scores and calculate averages
+    // Add individual round scores and calculate averages; rank by best average
     const playerStatsArray = Array.from(playerStatsMap.values()).map(stats => {
       const sortedRounds = stats.rounds.sort((a, b) => getDateValue(a.round.date) - getDateValue(b.round.date))
       return {
@@ -166,23 +168,23 @@ export default function TripDetails() {
         round2Score: sortedRounds[1]?.round.score,
         round3Score: sortedRounds[2]?.round.score
       }
-    }).sort((a, b) => {
-      // Sort by final round score (best to worst)
-      const aFinalRound = a.round3Score || a.round2Score || a.round1Score || Infinity
-      const bFinalRound = b.round3Score || b.round2Score || b.round1Score || Infinity
-      return aFinalRound - bFinalRound
-    })
+    }).sort((a, b) => a.averageScore - b.averageScore)
 
     setPlayerStats(playerStatsArray)
-    
-    // Set champion (player with best average score)
+
+    // Prefer stored champion when present; otherwise best average
     if (playerStatsArray.length > 0) {
-      setChampion(playerStatsArray[0])
+      const storedChampion = trip.championPlayerId
+        ? playerStatsArray.find(stat => stat.player.id === trip.championPlayerId)
+        : undefined
+      setChampion(storedChampion ?? playerStatsArray[0])
+    } else {
+      setChampion(null)
     }
   }, [trip, players, courses, rounds, tripId])
 
-  // Calculate attendees and total players
-  const attendeesWithoutScores = trip?.attendees && players.length > 0 && rounds.length > 0
+  // Calculate attendees and total players (works even when no rounds exist yet)
+  const attendeesWithoutScores = trip?.attendees && players.length > 0
     ? players.filter(player => {
         if (!player || !player.id) return false
         const isAttendee = trip.attendees!.includes(player.id)
@@ -196,20 +198,22 @@ export default function TripDetails() {
 
   if (loading) {
     return (
-      <div className="container">
-        <div className="loading">Loading trip details...</div>
-      </div>
+      <PageShell title="Trip" backHref="/">
+        <LoadingState label="Loading trip..." />
+      </PageShell>
     )
   }
 
   if (!trip) {
     return (
-      <div className="container">
-        <div className="error-message">
-          <h2>Trip not found</h2>
-          <Link href="/" className="btn btn-primary">Back to Dashboard</Link>
-        </div>
-      </div>
+      <PageShell title="Trip not found" backHref="/">
+        <EmptyState
+          title="Trip not found"
+          description="This trip may have been removed or the link is out of date."
+          icon="fa-map-marker-alt"
+          actionHref="/"
+        />
+      </PageShell>
     )
   }
 
@@ -240,10 +244,11 @@ export default function TripDetails() {
       enableSorting: false,
       cell: info => {
         const rankIndex = info.row.index
-        if (rankIndex === 0) return '🥇'
-        if (rankIndex === 1) return '🥈'
-        if (rankIndex === 2) return '🥉'
-        return `#${rankIndex + 1}`
+        return (
+          <span className={`rank-badge ${rankIndex < 3 ? `rank-badge-${rankIndex + 1}` : ''}`}>
+            #{rankIndex + 1}
+          </span>
+        )
       },
       meta: { headerClassName: 'rank-col', cellClassName: 'rank-col' }
     },
@@ -305,49 +310,36 @@ export default function TripDetails() {
   ]
 
   return (
-    <div className="container">
-      <header className="header">
-        <div className="header-content">
-          <div className="header-top">
-            <Link href="/" className="back-link">
-              <i className="fas fa-arrow-left" aria-hidden="true"></i> Dashboard
-            </Link>
-          </div>
-          <h1><i className="fas fa-trophy"></i> {tripName}</h1>
-          <p>{formatDate(trip.startDate)} to {formatDate(trip.endDate)}</p>
-          {trip.description && <p className="trip-description">{trip.description}</p>}
-        </div>
-      </header>
-
-      <main className="main-content">
-                    {/* Empty State for No Rounds */}
-            {tripRounds.length === 0 && attendeesWithoutScores.length === 0 && !(trip.photos && trip.photos.length > 0) && (
-              <div style={{
-                textAlign: 'center',
-                padding: '4rem 2rem'
-              }}>
-                <h2 style={{
-                  fontSize: '2rem',
-                  color: '#666',
-                  marginBottom: '1rem'
-                }}>🏌️‍♂️ No Rounds Found 🏌️‍♀️</h2>
-                <p style={{
-                  fontSize: '1.1rem',
-                  color: '#888',
-                  marginBottom: '2rem'
-                }}>
-                  Rounds not tracked for this trip
-                </p>
-                <Link href="/" className="btn btn-secondary">
-                  <i className="fas fa-arrow-left"></i> Back to Dashboard
-                </Link>
+    <PageShell
+      title={tripName}
+      icon="fa-trophy"
+      backHref="/"
+      subtitle={`${formatDate(trip.startDate)} – ${formatDate(trip.endDate)}`}
+      className={champion ? 'has-champion' : undefined}
+    >
+            {/* Champion Highlight - first so it stays attached under the header */}
+            {champion && (
+              <div className="champion-section">
+                <div className="champion-card">
+                  <div className="champion-player">
+                    <h3>{champion.player.name}</h3>
+                  </div>
+                </div>
               </div>
+            )}
+
+            {tripRounds.length === 0 && attendeesWithoutScores.length === 0 && !(trip.photos && trip.photos.length > 0) && (
+              <EmptyState
+                title="No rounds recorded"
+                description="Rounds were not tracked for this trip."
+                icon="fa-golf-ball"
+              />
             )}
 
             {/* Attendees Without Scores */}
             {attendeesWithoutScores.length > 0 && (
               <div className="attendees-section">
-                <h2>📋 Trip Attendees (No Scores Recorded)</h2>
+                <h2 className="section-title">Trip Attendees</h2>
                 <div className="attendees-grid">
                   {attendeesWithoutScores.map(player => (
                     <div key={player.id} className="attendee-card">
@@ -378,23 +370,9 @@ export default function TripDetails() {
         {/* Content sections - only show when there are rounds */}
         {tripRounds.length > 0 && (
           <>
-            {/* Champion Highlight */}
-            {champion && (
-              <div className="champion-section">
-                <div className="champion-card">
-                  <div className="champion-content">
-                    <p className="champion-label">Champion</p>
-                    <div className="champion-player">
-                      <h3>{champion.player.name}</h3>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Trip Overview */}
             <div className="trip-overview">
-              <h2>Trip Overview</h2>
+              <h2 className="section-title">Trip Overview</h2>
               <div className="overview-grid">
                 <div className="overview-item">
                   <i className="fas fa-users"></i>
@@ -421,7 +399,7 @@ export default function TripDetails() {
 
             {/* Fun Stats */}
             <div className="fun-stats">
-              <h2>Fun Stats</h2>
+              <h2 className="section-title">Fun Stats</h2>
               <div className="fun-stats-grid">
                 <div className="fun-stat-card">
                   <i className="fas fa-fire"></i>
@@ -508,7 +486,7 @@ export default function TripDetails() {
 
             {/* Player Rankings */}
             <div className="player-rankings">
-              <h2>Player Rankings</h2>
+              <h2 className="section-title">Player Rankings</h2>
               <SortableTable
                 data={rankingsTableData}
                 columns={rankingsColumns}
@@ -521,7 +499,7 @@ export default function TripDetails() {
 
             {/* Course Rounds */}
             <div className="course-rounds">
-              <h2>Course Rounds</h2>
+              <h2 className="section-title">Course Rounds</h2>
               {uniqueCourses.map(course => {
                 const courseRounds = tripRounds.filter(tr => tr.course.id === course.id)
                 const courseStats = {
@@ -592,7 +570,6 @@ export default function TripDetails() {
           </>
         )}
 
-      </main>
-    </div>
+    </PageShell>
   )
 }

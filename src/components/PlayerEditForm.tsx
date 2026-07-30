@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Player } from '@/lib/types'
 
 interface PlayerEditFormProps {
@@ -11,12 +12,17 @@ interface PlayerEditFormProps {
 }
 
 export default function PlayerEditForm({ player, onSave, onCancel, isEditing = false }: PlayerEditFormProps) {
+  const [mounted, setMounted] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     yearsPlayed: 0,
     averageScore: 0,
     totalTrips: 0
   })
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (player) {
@@ -38,8 +44,10 @@ export default function PlayerEditForm({ player, onSave, onCancel, isEditing = f
     onSave(formData)
   }
 
-  return (
-    <div className="edit-form-overlay">
+  if (!mounted) return null
+
+  return createPortal(
+    <div className="edit-form-overlay" role="dialog" aria-modal="true">
       <div className="edit-form">
         <div className="edit-form-header">
           <h3>{isEditing ? 'Edit Player' : 'Add New Player'}</h3>
@@ -104,7 +112,8 @@ export default function PlayerEditForm({ player, onSave, onCancel, isEditing = f
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
