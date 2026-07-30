@@ -3,19 +3,46 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Trip, Player, TripPhoto } from '@/lib/types'
+import { createId } from '@/lib/admin-data'
 import PhotoUpload from './PhotoUpload'
 
 interface TripEditFormProps {
   trip?: Trip
   players: Player[]
   trips?: Trip[]
-  onSave: (tripData: Omit<Trip, 'id'>) => void
+  onSave: (tripData: Omit<Trip, 'id'>, newPlayers?: Player[]) => void
   onCancel: () => void
   isEditing?: boolean
+  embedded?: boolean
+  disabled?: boolean
+  submitLabel?: string
 }
 
-export default function TripEditForm({ trip, players, trips = [], onSave, onCancel, isEditing = false }: TripEditFormProps) {
+function defaultDates() {
+  const now = new Date()
+  const year = now.getMonth() >= 8 ? now.getFullYear() + 1 : now.getFullYear()
+  const start = new Date(year, 8, 20)
+  const end = new Date(year, 8, 22)
+  return {
+    startDate: start.toISOString().split('T')[0],
+    endDate: end.toISOString().split('T')[0]
+  }
+}
+
+export default function TripEditForm({
+  trip,
+  players,
+  trips = [],
+  onSave,
+  onCancel,
+  isEditing = false,
+  embedded = false,
+  disabled = false,
+  submitLabel
+}: TripEditFormProps) {
   const [mounted, setMounted] = useState(false)
+  const [localPlayers, setLocalPlayers] = useState(players)
+  const [newPlayerName, setNewPlayerName] = useState('')
   const [formData, setFormData] = useState({
     startDate: '',
     endDate: '',
@@ -27,10 +54,15 @@ export default function TripEditForm({ trip, players, trips = [], onSave, onCanc
     attendees: [] as string[]
   })
   const [photos, setPhotos] = useState<TripPhoto[]>([])
+  const [createdPlayerIds, setCreatedPlayerIds] = useState<string[]>([])
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    setLocalPlayers(players)
+  }, [players])
 
   useEffect(() => {
     if (trip) {
@@ -46,13 +78,10 @@ export default function TripEditForm({ trip, players, trips = [], onSave, onCanc
       })
       setPhotos(trip.photos || [])
     } else {
-      // Set default dates for new trips
-      const today = new Date()
-      const nextYear = new Date(today.getFullYear() + 1, 5, 1) // June 1st next year
+      const dates = defaultDates()
       setFormData(prev => ({
         ...prev,
-        startDate: nextYear.toISOString().split('T')[0],
-        endDate: new Date(nextYear.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 3 days later
+        ...dates
       }))
       setPhotos([])
     }
@@ -60,6 +89,7 @@ export default function TripEditForm({ trip, players, trips = [], onSave, onCanc
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (disabled) return
     if (!formData.startDate) {
       alert('Start date is required')
       return
@@ -72,16 +102,40 @@ export default function TripEditForm({ trip, players, trips = [], onSave, onCanc
       alert('Location is required')
       return
     }
-    onSave({ ...formData, photos })
+    const newPlayers = localPlayers.filter(player => createdPlayerIds.includes(player.id))
+    onSave({ ...formData, photos }, newPlayers)
   }
 
   const handleAttendeeChange = (playerId: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      attendees: checked 
+      attendees: checked
         ? [...prev.attendees, playerId]
         : prev.attendees.filter(id => id !== playerId)
     }))
+  }
+
+  const addNewPlayer = () => {
+    const name = newPlayerName.trim()
+    if (!name || disabled) return
+    if (localPlayers.some(player => player.name.toLowerCase() === name.toLowerCase())) {
+      alert('A player with that name already exists')
+      return
+    }
+    const player: Player = {
+      id: createId(),
+      name,
+      yearsPlayed: 0,
+      averageScore: 0,
+      totalTrips: 0
+    }
+    setLocalPlayers(prev => [...prev, player])
+    setCreatedPlayerIds(prev => [...prev, player.id])
+    setFormData(prev => ({
+      ...prev,
+      attendees: [...prev.attendees, player.id]
+    }))
+    setNewPlayerName('')
   }
 
   const previousLocations = Array.from(
@@ -90,147 +144,181 @@ export default function TripEditForm({ trip, players, trips = [], onSave, onCanc
 
   if (!mounted) return null
 
-  return createPortal(
-    <div className="edit-form-overlay" role="dialog" aria-modal="true">
-      <div className="edit-form">
-        <div className="edit-form-header">
-          <h3>{isEditing ? 'Edit Trip' : 'Add New Trip'}</h3>
-          <button onClick={onCancel} className="btn-close">
-            <i className="fas fa-times"></i>
+  const formBody = (
+    <div className={embedded ? 'admin-embedded-form' : 'edit-form'}>
+      <div className={embedded ? 'admin-embedded-form-header' : 'edit-form-header'}>
+        <h3>{isEditing ? 'Edit Trip' : 'New Trip'}</h3>
+        {!embedded && (
+          <button type="button" onClick={onCancel} className="btn-close" aria-label="Close">
+            <i className="fas fa-times" aria-hidden="true"></i>
           </button>
-        </div>
-        
-        <form onSubmit={handleSubmit}>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="startDate">Start Date *</label>
-              <input
-                id="startDate"
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                required
-              />
-            </div>
+        )}
+      </div>
 
-            <div className="form-group">
-              <label htmlFor="endDate">End Date *</label>
-              <input
-                id="endDate"
-                type="date"
-                value={formData.endDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                required
-              />
-            </div>
-          </div>
+      {!isEditing && (
+        <p className="form-help trip-placeholder-help">
+          You can save a scheduled trip with no scores yet. Add courses and scores later from the trip page.
+        </p>
+      )}
 
+      <form onSubmit={handleSubmit}>
+        <div className="form-row">
           <div className="form-group">
-            <label htmlFor="tripLocation">Location *</label>
+            <label htmlFor="startDate">Start Date *</label>
             <input
-              id="tripLocation"
-              type="text"
-              value={formData.location}
-              onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+              id="startDate"
+              type="date"
+              value={formData.startDate}
+              disabled={disabled}
+              onChange={e => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
               required
-              placeholder="Enter trip location"
-              list="trip-location-options"
-            />
-            <datalist id="trip-location-options">
-              {previousLocations.map(location => (
-                <option key={location} value={location} />
-              ))}
-            </datalist>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Enter trip description"
-              rows={3}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="weather">Weather</label>
+            <label htmlFor="endDate">End Date *</label>
             <input
-              id="weather"
-              type="text"
-              value={formData.weather}
-              onChange={(e) => setFormData(prev => ({ ...prev, weather: e.target.value }))}
-              placeholder="e.g., Sunny 75F"
+              id="endDate"
+              type="date"
+              value={formData.endDate}
+              disabled={disabled}
+              onChange={e => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+              required
             />
           </div>
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="championPlayerId">Champion</label>
-            <select
-              id="championPlayerId"
-              value={formData.championPlayerId}
-              onChange={(e) => setFormData(prev => ({ ...prev, championPlayerId: e.target.value }))}
-            >
-              <option value="">No champion selected</option>
-              {players.map(player => (
-                <option key={player.id} value={player.id}>
-                  {player.name}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="form-group">
+          <label htmlFor="tripLocation">Location *</label>
+          <input
+            id="tripLocation"
+            type="text"
+            value={formData.location}
+            disabled={disabled}
+            onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
+            required
+            placeholder="Enter trip location"
+            list="trip-location-options"
+          />
+          <datalist id="trip-location-options">
+            {previousLocations.map(location => (
+              <option key={location} value={location} />
+            ))}
+          </datalist>
+        </div>
 
-          <div className="form-group">
-            <label>Attendees (No Scores Recorded)</label>
-            <div className="attendees-list">
-              {players.map(player => (
+        <div className="form-group">
+          <label htmlFor="description">Description</label>
+          <textarea
+            id="description"
+            value={formData.description}
+            disabled={disabled}
+            onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            placeholder="Enter trip description"
+            rows={3}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="weather">Weather</label>
+          <input
+            id="weather"
+            type="text"
+            value={formData.weather}
+            disabled={disabled}
+            onChange={e => setFormData(prev => ({ ...prev, weather: e.target.value }))}
+            placeholder="e.g., Sunny 75F"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="championPlayerId">Champion</label>
+          <select
+            id="championPlayerId"
+            value={formData.championPlayerId}
+            disabled={disabled}
+            onChange={e => setFormData(prev => ({ ...prev, championPlayerId: e.target.value }))}
+          >
+            <option value="">No champion selected</option>
+            {localPlayers.map(player => (
+              <option key={player.id} value={player.id}>
+                {player.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Expected attendees (optional)</label>
+          <div className="attendees-list">
+            {[...localPlayers]
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map(player => (
                 <label key={player.id} className="attendee-checkbox">
                   <input
                     type="checkbox"
                     checked={formData.attendees.includes(player.id)}
-                    onChange={(e) => handleAttendeeChange(player.id, e.target.checked)}
+                    disabled={disabled}
+                    onChange={e => handleAttendeeChange(player.id, e.target.checked)}
                   />
                   <span>{player.name}</span>
                 </label>
               ))}
+          </div>
+          <small className="form-help">
+            For a placeholder trip, pick who is expected. Scores can be added later.
+          </small>
+          {!disabled && (
+            <div className="inline-add-player">
+              <input
+                type="text"
+                value={newPlayerName}
+                onChange={e => setNewPlayerName(e.target.value)}
+                placeholder="Add new player name"
+              />
+              <button type="button" className="btn btn-secondary" onClick={addNewPlayer}>
+                Add player
+              </button>
             </div>
-            <small className="form-help">
-              Select players who attended this trip but don't have scores recorded
-            </small>
-          </div>
+          )}
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="notes">Notes</label>
-            <textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder="Enter additional notes"
-              rows={3}
-            />
-          </div>
+        <div className="form-group">
+          <label htmlFor="notes">Notes</label>
+          <textarea
+            id="notes"
+            value={formData.notes}
+            disabled={disabled}
+            onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+            placeholder="Enter additional notes"
+            rows={3}
+          />
+        </div>
 
-          {/* Photo Upload Section */}
-          <div className="form-group">
-            <PhotoUpload 
-              onPhotosAdded={setPhotos}
-              existingPhotos={photos}
-            />
-          </div>
+        <div className="form-group">
+          <PhotoUpload onPhotosAdded={setPhotos} existingPhotos={photos} />
+        </div>
 
-          <div className="form-actions">
-            <button type="button" onClick={onCancel} className="btn btn-secondary">
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-primary">
-              {isEditing ? 'Update Trip' : 'Add Trip'}
-            </button>
-          </div>
-        </form>
-      </div>
+        <div className="form-actions">
+          <button type="button" onClick={onCancel} className="btn btn-secondary">
+            Cancel
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={disabled}>
+            {submitLabel || (isEditing ? 'Update Trip' : 'Save Trip')}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+
+  if (embedded) {
+    return formBody
+  }
+
+  return createPortal(
+    <div className="edit-form-overlay" role="dialog" aria-modal="true">
+      {formBody}
     </div>,
     document.body
   )
 }
-

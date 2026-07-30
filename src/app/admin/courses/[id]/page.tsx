@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
-export default function LegacyAdminCoursesEditPage() {
-  redirect('/admin')
+export default function LegacyAdminCoursesIdPage() {
+  redirect('/admin/courses')
 }

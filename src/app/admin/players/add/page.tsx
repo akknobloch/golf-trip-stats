@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function LegacyAdminPlayersAddPage() {
-  redirect('/admin')
+  redirect('/admin/players')
 }

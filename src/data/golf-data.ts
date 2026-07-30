@@ -195,13 +195,6 @@ export const staticPlayers: Player[] = [
     "totalTrips": 0
   },
   {
-    "id": "17554599416444p",
-    "name": "Unknown Player",
-    "yearsPlayed": 0,
-    "averageScore": 0,
-    "totalTrips": 0
-  },
-  {
     "id": "17554599416447p",
     "name": "Matt Slagel",
     "yearsPlayed": 0,
@@ -308,7 +301,8 @@ export const staticCourses: Course[] = [
     "location": "Galena, IL",
     "par": 72,
     "imageUrl": "https://www.eagleridge.com/images/jqg_1678308965.jpg",
-    "timesPlayed": 2
+    "timesPlayed": 3,
+    "lastPlayed": 2024
   },
   {
     "id": "1755398281140",
@@ -316,7 +310,8 @@ export const staticCourses: Course[] = [
     "location": "Galena, IL",
     "par": 72,
     "imageUrl": "https://www.eagleridge.com/images/jqg_1618526855.jpg",
-    "timesPlayed": 0
+    "timesPlayed": 4,
+    "lastPlayed": 2024
   },
   {
     "id": "1755398304927",
@@ -324,112 +319,128 @@ export const staticCourses: Course[] = [
     "location": "Galena, IL",
     "par": 72,
     "imageUrl": "https://www.eagleridge.com/images/jqg_1721246257.jpg",
-    "timesPlayed": 1
+    "timesPlayed": 3,
+    "lastPlayed": 2024
   },
   {
     "id": "17554616106391c0",
     "name": "Spirit Hollow Golf Course",
     "location": "Imported Location",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 1,
+    "lastPlayed": 2023
   },
   {
     "id": "17554616106391c1",
     "name": "Fyre Lake National Golf Club",
     "location": "Imported Location",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 1,
+    "lastPlayed": 2023
   },
   {
     "id": "17554616106391c2",
     "name": "TPC Deere Run",
     "location": "Imported Location",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 1,
+    "lastPlayed": 2023
   },
   {
     "id": "17554619278871c0",
     "name": "Amana Colonies Golf Course",
     "location": "Imported Location",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 1,
+    "lastPlayed": 2022
   },
   {
     "id": "17554619278871c1",
     "name": "Finkbine Golf Course",
     "location": "Imported Location",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 1,
+    "lastPlayed": 2022
   },
   {
     "id": "17554619278871c2",
     "name": "Blue Top Ridge at Riverside GC",
     "location": "Imported Location",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 1,
+    "lastPlayed": 2022
   },
   {
     "id": "17554622417131c0",
     "name": "Gull Lake View - Stonehedge South",
     "location": "Imported Location",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 1,
+    "lastPlayed": 2021
   },
   {
     "id": "17554622417131c1",
     "name": "Gull Lake View - Bedford Valley",
     "location": "Imported Location",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 1,
+    "lastPlayed": 2021
   },
   {
     "id": "17554622417131c2",
     "name": "Gull Lake View - Stoatin Brae",
     "location": "Imported Location",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 1,
+    "lastPlayed": 2021
   },
   {
     "id": "17555225442771c0",
     "name": "Cog Hill - #2 Ravines Course",
     "location": "Imported Location",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 1,
+    "lastPlayed": 2019
   },
   {
     "id": "17555225442771c1",
     "name": "Cog Hill - #3 Course",
     "location": "Imported Location",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 0,
+    "lastPlayed": 0
   },
   {
     "id": "17555225442771c2",
     "name": "Cog Hill - #4 Dubsdread",
     "location": "Imported Location",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 1,
+    "lastPlayed": 2019
   },
   {
     "id": "17555252748071c2",
     "name": "Bear Creek Valley Golf Club",
     "location": "Osage Beach, MO",
     "par": 72,
-    "timesPlayed": 0
+    "timesPlayed": 2,
+    "lastPlayed": 2025
   },
   {
     "name": "Old Kinderhook Golf Club",
     "location": "Camdenton, MO",
     "par": 71,
-    "timesPlayed": 0,
-    "id": "1768845724187"
+    "timesPlayed": 1,
+    "id": "1768845724187",
+    "lastPlayed": 2025
   },
   {
     "name": "Osage National Golf Club",
     "location": "Lake Ozark, MO",
     "par": 72,
-    "timesPlayed": 0,
-    "id": "1768845772118"
+    "timesPlayed": 1,
+    "id": "1768845772118",
+    "lastPlayed": 2025
   }
 ]
 
@@ -555,21 +566,24 @@ export const staticTrips: Trip[] = [
     "startDate": "2017-09-20",
     "endDate": "2017-09-22",
     "location": "Galena, IL",
-    "championPlayerId": "1755398345513"
+    "championPlayerId": "1755398345513",
+    "attendees": []
   },
   {
     "id": "17553563586426",
     "startDate": "2018-09-20",
     "endDate": "2018-09-22",
     "location": "Galena, IL",
-    "championPlayerId": "1755398345513"
+    "championPlayerId": "1755398345513",
+    "attendees": []
   },
   {
     "id": "17553563586427",
     "startDate": "2019-09-20",
     "endDate": "2019-09-22",
     "location": "Chicago, IL",
-    "championPlayerId": "175535565261524"
+    "championPlayerId": "175535565261524",
+    "attendees": []
   },
   {
     "id": "17553563586428",
@@ -685,6 +699,34 @@ export const staticTrips: Trip[] = [
       }
     ],
     "id": "1768845836360"
+  },
+  {
+    "startDate": "2026-09-18",
+    "endDate": "2026-09-20",
+    "location": "Galena, IL",
+    "description": "",
+    "weather": "",
+    "notes": "",
+    "championPlayerId": "",
+    "attendees": [
+      "1755398345513",
+      "1768846383521_g7vcoif",
+      "1768846383521_hhprfig",
+      "17553556526154",
+      "1768846383521_jrfpa11",
+      "17553556526156",
+      "175535565261525",
+      "17553556526153",
+      "175535565261523",
+      "17554599416447p",
+      "17554599416443p",
+      "175535565261512",
+      "17553556526152",
+      "175535565261519",
+      "17553556526157"
+    ],
+    "photos": [],
+    "id": "1785454873493_cmondqf"
   }
 ]
 
@@ -781,7 +823,7 @@ export const staticRounds: Round[] = [
   },
   {
     "id": "175546138632340",
-    "playerId": "17554599416444p",
+    "playerId": "17553556526158",
     "tripId": "175535635864212",
     "courseId": "1755398253318",
     "score": 92,
@@ -791,7 +833,7 @@ export const staticRounds: Round[] = [
   },
   {
     "id": "175546138632341",
-    "playerId": "17554599416444p",
+    "playerId": "17553556526158",
     "tripId": "175535635864212",
     "courseId": "1755398281140",
     "score": 94,
@@ -801,7 +843,7 @@ export const staticRounds: Round[] = [
   },
   {
     "id": "175546138632342",
-    "playerId": "17554599416444p",
+    "playerId": "17553556526158",
     "tripId": "175535635864212",
     "courseId": "1755398304927",
     "score": 106,
@@ -1521,7 +1563,7 @@ export const staticRounds: Round[] = [
   },
   {
     "id": "1755461610640150",
-    "playerId": "17554599416444p",
+    "playerId": "17553556526158",
     "tripId": "175535635864211",
     "courseId": "17554616106391c0",
     "score": 112,
@@ -1531,7 +1573,7 @@ export const staticRounds: Round[] = [
   },
   {
     "id": "1755461610640152",
-    "playerId": "17554599416444p",
+    "playerId": "17553556526158",
     "tripId": "175535635864211",
     "courseId": "17554616106391c2",
     "score": 108,

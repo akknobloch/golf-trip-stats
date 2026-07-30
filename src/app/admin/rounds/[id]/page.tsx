@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
-export default function LegacyAdminRoundsEditPage() {
+export default function LegacyAdminRoundsIdPage() {
   redirect('/admin')
 }

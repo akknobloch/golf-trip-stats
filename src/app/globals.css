@@ -5108,4 +5108,211 @@ button,
   }
 }
 
+/* Trip-centric admin */
+.admin-banner {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.9rem 1.1rem;
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+  line-height: 1.45;
+}
+
+.admin-banner i {
+  margin-top: 0.2rem;
+}
+
+.admin-banner code {
+  font-size: 0.9em;
+}
+
+.admin-banner-dev {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.admin-banner-prod {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+}
+
+.admin-page-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.admin-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+a.tab-btn {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.admin-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.admin-card-link:hover {
+  transform: translateY(-3px);
+}
+
+.section-help {
+  margin: 0.35rem 0 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+  max-width: 40rem;
+}
+
+.section-header {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.section-header-stack {
+  justify-content: flex-start;
+}
+
+.trip-status-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.trip-status-badge.scheduled,
+.trip-status-banner.scheduled {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.trip-status-badge.scored,
+.trip-status-banner.scored {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.trip-status-banner {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.btn-disabled {
+  opacity: 0.55;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.admin-embedded-form {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.admin-embedded-form-header h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+}
+
+.trip-placeholder-help {
+  margin-bottom: 1rem;
+}
+
+.inline-add-player {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.inline-add-player input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.admin-simple-list {
+  margin: 0.5rem 0 1.25rem;
+  padding-left: 1.25rem;
+}
+
+.hub-tabs {
+  margin-top: 0.5rem;
+}
+
+.score-course-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.score-course-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.score-course-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.score-course-card label {
+  display: block;
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.score-course-card select,
+.score-course-card input,
+.score-roster input,
+.score-grid-table input,
+.trip-score-grid-section textarea {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.score-roster {
+  margin-bottom: 1.5rem;
+}
+
+.score-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.score-grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.score-grid-table th,
+.score-grid-table td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.score-grid-table th {
+  background: #f3f4f6;
+}
+
 
