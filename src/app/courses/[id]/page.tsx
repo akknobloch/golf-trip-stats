@@ -89,7 +89,7 @@ export default function CourseDetails() {
         <div className="header-content">
           <div className="header-top">
             <Link href="/" className="back-link">
-              <i className="fas fa-arrow-left"></i> Back to Dashboard
+              <i className="fas fa-arrow-left" aria-hidden="true"></i> Dashboard
             </Link>
           </div>
           <h1><i className="fas fa-flag"></i> {course.name}</h1>
