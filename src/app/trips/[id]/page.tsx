@@ -310,7 +310,7 @@ export default function TripDetails() {
         <div className="header-content">
           <div className="header-top">
             <Link href="/" className="back-link">
-              <i className="fas fa-arrow-left"></i> Back to Dashboard
+              <i className="fas fa-arrow-left" aria-hidden="true"></i> Dashboard
             </Link>
           </div>
           <h1><i className="fas fa-trophy"></i> {tripName}</h1>
@@ -372,8 +372,9 @@ export default function TripDetails() {
               <div className="champion-section">
                 <div className="champion-card">
                   <div className="champion-content">
+                    <p className="champion-label">Champion</p>
                     <div className="champion-player">
-                      <h3>🏆 {champion.player.name}</h3>
+                      <h3>{champion.player.name}</h3>
                     </div>
                   </div>
                 </div>

@@ -289,7 +289,7 @@ export default function PlayerDetails() {
         <div className="header-content">
           <div className="header-top">
             <Link href="/" className="back-link">
-              <i className="fas fa-arrow-left"></i> Back to Dashboard
+              <i className="fas fa-arrow-left" aria-hidden="true"></i> Dashboard
             </Link>
           </div>
           <h1><i className="fas fa-user"></i> {player.name}</h1>
@@ -301,8 +301,9 @@ export default function PlayerDetails() {
         {championshipCount > 0 && (
           <div className="champion-section">
             <div className="champion-card">
+              <p className="champion-label">Champion</p>
               <div className="champion-player">
-                <h3>🏆 {championshipCount}x Champion</h3>
+                <h3>{championshipCount}x Trip Winner</h3>
               </div>
             </div>
           </div>
