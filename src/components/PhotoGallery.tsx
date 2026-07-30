@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { TripPhoto } from '@/lib/types'
 
@@ -26,26 +26,18 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
     setCurrentIndex(index)
   }
 
-  const closeModal = useCallback(() => {
+  const closeModal = () => {
     setSelectedPhoto(null)
     setCurrentIndex(0)
-  }, [])
+  }
 
-  const goToIndex = useCallback((index: number) => {
+  const goToIndex = (index: number) => {
     if (index < 0 || index >= photos.length) {
       return
     }
     setCurrentIndex(index)
     setSelectedPhoto(photos[index])
-  }, [photos])
-
-  const nextPhoto = useCallback(() => {
-    goToIndex(currentIndex + 1)
-  }, [currentIndex, goToIndex])
-
-  const prevPhoto = useCallback(() => {
-    goToIndex(currentIndex - 1)
-  }, [currentIndex, goToIndex])
+  }
 
   useEffect(() => {
     if (!isOpen) {
@@ -57,11 +49,20 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        closeModal()
+        setSelectedPhoto(null)
+        setCurrentIndex(0)
       } else if (e.key === 'ArrowRight') {
-        nextPhoto()
+        setCurrentIndex(prev => {
+          const next = Math.min(prev + 1, photos.length - 1)
+          setSelectedPhoto(photos[next])
+          return next
+        })
       } else if (e.key === 'ArrowLeft') {
-        prevPhoto()
+        setCurrentIndex(prev => {
+          const next = Math.max(prev - 1, 0)
+          setSelectedPhoto(photos[next])
+          return next
+        })
       }
     }
 
@@ -72,7 +73,7 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
       document.body.style.overflow = previousOverflow
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isOpen, closeModal, nextPhoto, prevPhoto])
+  }, [isOpen, photos])
 
   if (photos.length === 0) {
     return (
@@ -128,7 +129,7 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
             <button
               type="button"
               className="photo-nav-btn photo-prev-btn"
-              onClick={prevPhoto}
+              onClick={() => goToIndex(currentIndex - 1)}
               disabled={currentIndex === 0}
               aria-label="Previous photo"
             >
@@ -137,7 +138,7 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
             <button
               type="button"
               className="photo-nav-btn photo-next-btn"
-              onClick={nextPhoto}
+              onClick={() => goToIndex(currentIndex + 1)}
               disabled={currentIndex === photos.length - 1}
               aria-label="Next photo"
             >
