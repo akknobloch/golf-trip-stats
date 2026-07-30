@@ -321,7 +321,7 @@ export default function TripDetails() {
 
       <main className="main-content">
                     {/* Empty State for No Rounds */}
-            {tripRounds.length === 0 && attendeesWithoutScores.length === 0 && (
+            {tripRounds.length === 0 && attendeesWithoutScores.length === 0 && !(trip.photos && trip.photos.length > 0) && (
               <div style={{
                 textAlign: 'center',
                 padding: '4rem 2rem'
@@ -364,6 +364,17 @@ export default function TripDetails() {
               </div>
             )}
 
+        {/* Photos are available even when rounds were not recorded */}
+        {trip.photos && trip.photos.length > 0 && (
+          <div className="trip-photos-section">
+            <PhotoGallery
+              photos={trip.photos}
+              title="📸 Trip Photos"
+              className="trip-photo-gallery"
+            />
+          </div>
+        )}
+
         {/* Content sections - only show when there are rounds */}
         {tripRounds.length > 0 && (
           <>
@@ -379,17 +390,6 @@ export default function TripDetails() {
                 </div>
               </div>
             )}
-
-            {/* Photo Gallery */}
-        {trip.photos && trip.photos.length > 0 && (
-          <div className="trip-photos-section">
-            <PhotoGallery 
-              photos={trip.photos} 
-              title="📸 Trip Photos" 
-              className="trip-photo-gallery"
-            />
-          </div>
-        )}
 
             {/* Trip Overview */}
             <div className="trip-overview">

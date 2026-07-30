@@ -4056,99 +4056,123 @@ body {
   line-height: 1.4;
 }
 
-/* Photo Modal */
+/* Photo Modal — uniquely scoped to avoid collisions with admin .modal-* styles */
 .photo-modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  padding: 2rem;
+  z-index: 100000;
+  padding: 1rem;
+  outline: none;
 }
 
 .photo-modal {
-  max-width: 90vw;
-  max-height: 90vh;
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
+  width: min(96vw, 1600px);
+  max-height: 96vh;
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
 }
 
-.modal-header {
+.photo-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  gap: 1rem;
+  padding: 0.75rem 0.25rem 1rem;
+  background: transparent;
+  border-bottom: none;
+  flex-shrink: 0;
 }
 
-.modal-info {
+.photo-modal-info {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  min-width: 0;
 }
 
 .photo-counter {
   font-weight: 600;
-  color: #1e293b;
+  color: #f8fafc;
 }
 
 .photo-caption-modal {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(70vw, 900px);
 }
 
-.modal-close {
-  background: none;
+.photo-modal-close {
+  background: rgba(255, 255, 255, 0.12);
   border: none;
   font-size: 1.25rem;
-  color: #6b7280;
+  color: #f8fafc;
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  padding: 0.65rem;
+  border-radius: 999px;
+  transition: background 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
-.modal-close:hover {
-  background: #e2e8f0;
-  color: #1e293b;
+.photo-modal-close:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
 }
 
-.modal-content {
+.photo-modal-body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
-  max-height: 70vh;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  max-height: calc(96vh - 4.5rem);
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.modal-image {
+.photo-modal-image {
   max-width: 100%;
-  max-height: 100%;
+  max-height: calc(96vh - 4.5rem);
+  width: auto;
+  height: auto;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 4px;
+  image-rendering: auto;
 }
 
-.modal-navigation {
+.photo-modal-navigation {
   position: absolute;
   top: 50%;
+  left: 0;
+  right: 0;
   transform: translateY(-50%);
   width: 100%;
   display: flex;
   justify-content: space-between;
-  padding: 0 1rem;
+  padding: 0;
   pointer-events: none;
 }
 
-.nav-btn {
-  background: rgba(255, 255, 255, 0.9);
+.photo-nav-btn {
+  background: rgba(255, 255, 255, 0.92);
   border: none;
   border-radius: 50%;
   width: 48px;
@@ -4158,21 +4182,21 @@ body {
   justify-content: center;
   cursor: pointer;
   pointer-events: all;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, background 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
-.nav-btn:hover:not(:disabled) {
+.photo-nav-btn:hover:not(:disabled) {
   background: white;
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
-.nav-btn:disabled {
-  opacity: 0.5;
+.photo-nav-btn:disabled {
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
-.nav-btn i {
+.photo-nav-btn i {
   color: #1e293b;
   font-size: 1.25rem;
 }
@@ -4452,19 +4476,20 @@ body {
   }
   
   .photo-modal-overlay {
-    padding: 1rem;
-  }
-  
-  .photo-modal {
-    max-width: 95vw;
-    max-height: 95vh;
-  }
-  
-  .modal-content {
     padding: 0.5rem;
   }
-  
-  .nav-btn {
+
+  .photo-modal {
+    width: 100%;
+    max-height: 100vh;
+  }
+
+  .photo-modal-body,
+  .photo-modal-image {
+    max-height: calc(100vh - 4rem);
+  }
+
+  .photo-nav-btn {
     width: 40px;
     height: 40px;
   }

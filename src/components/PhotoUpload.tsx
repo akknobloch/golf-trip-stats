@@ -51,14 +51,15 @@ export default function PhotoUpload({ onPhotosAdded, existingPhotos = [], classN
       const newPhotos: TripPhoto[] = []
 
       for (const file of imageFiles) {
-        const displayUrl = await createResizedDataURL(file, 1400, 0.88)
-        const thumbnailUrl = await createResizedDataURL(file, 400, 0.9)
+        // Keep a high-res display image for the fullscreen viewer, plus a small thumb for grids.
+        const displayUrl = await createResizedDataURL(file, 1920, 0.92)
+        const thumbnailUrl = await createResizedDataURL(file, 480, 0.85)
 
         const photo: TripPhoto = {
           id: `photo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           url: displayUrl,
           thumbnailUrl,
-          caption: file.name.replace(/\.[^/.]+$/, ''), // Remove file extension for caption
+          caption: file.name.replace(/\.[^/.]+$/, ''),
           date: new Date().toISOString()
         }
 
@@ -79,38 +80,40 @@ export default function PhotoUpload({ onPhotosAdded, existingPhotos = [], classN
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
       const img = new Image()
-      
+      const objectUrl = URL.createObjectURL(file)
+
       img.onload = () => {
-        // Calculate resized dimensions
         let { width, height } = img
-        
+
         if (width > height) {
           if (width > maxSize) {
             height = (height * maxSize) / width
             width = maxSize
           }
-        } else {
-          if (height > maxSize) {
-            width = (width * maxSize) / height
-            height = maxSize
-          }
+        } else if (height > maxSize) {
+          width = (width * maxSize) / height
+          height = maxSize
         }
-        
-        canvas.width = width
-        canvas.height = height
-        
-        // Enable image smoothing for better quality
+
+        canvas.width = Math.round(width)
+        canvas.height = Math.round(height)
+
         if (ctx) {
           ctx.imageSmoothingEnabled = true
           ctx.imageSmoothingQuality = 'high'
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
         }
-        
-        ctx?.drawImage(img, 0, 0, width, height)
+
+        URL.revokeObjectURL(objectUrl)
         resolve(canvas.toDataURL('image/jpeg', quality))
       }
-      
-      img.onerror = reject
-      img.src = URL.createObjectURL(file)
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl)
+        reject(new Error('Failed to load image'))
+      }
+
+      img.src = objectUrl
     })
   }
 
