@@ -291,6 +291,13 @@ export const staticPlayers: Player[] = [
     "yearsPlayed": 0,
     "averageScore": 0,
     "totalTrips": 0
+  },
+  {
+    "id": "1785456342356_6bpklcs",
+    "name": "Alex Funk",
+    "yearsPlayed": 0,
+    "averageScore": 0,
+    "totalTrips": 0
   }
 ]
 
@@ -723,7 +730,8 @@ export const staticTrips: Trip[] = [
       "175535565261512",
       "17553556526152",
       "175535565261519",
-      "17553556526157"
+      "17553556526157",
+      "1785456342356_6bpklcs"
     ],
     "photos": [],
     "id": "1785454873493_cmondqf"
