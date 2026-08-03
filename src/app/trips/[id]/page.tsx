@@ -158,7 +158,12 @@ export default function TripDetails() {
       stats.worstScore = Math.max(stats.worstScore, round.score)
     })
 
-    // Add individual round scores and calculate averages; rank by best average
+    // Add individual round scores and calculate averages
+    // Pre-2026: rank by best (lowest) score on the final round
+    // 2026+: rank by best (lowest) average across rounds
+    const tripYear = new Date(trip.startDate).getFullYear()
+    const rankByAverage = !Number.isNaN(tripYear) && tripYear >= 2026
+
     const playerStatsArray = Array.from(playerStatsMap.values()).map(stats => {
       const sortedRounds = stats.rounds.sort((a, b) => getDateValue(a.round.date) - getDateValue(b.round.date))
       return {
@@ -168,11 +173,38 @@ export default function TripDetails() {
         round2Score: sortedRounds[1]?.round.score,
         round3Score: sortedRounds[2]?.round.score
       }
-    }).sort((a, b) => a.averageScore - b.averageScore)
+    })
+
+    const finalRoundNumber = playerStatsArray.reduce((maxRounds, stats) => {
+      const roundsPlayed = [stats.round1Score, stats.round2Score, stats.round3Score]
+        .filter((score): score is number => score !== undefined).length
+      return Math.max(maxRounds, roundsPlayed)
+    }, 0)
+
+    const getFinalRoundScore = (stats: typeof playerStatsArray[number]) => {
+      if (finalRoundNumber >= 3) return stats.round3Score
+      if (finalRoundNumber === 2) return stats.round2Score
+      if (finalRoundNumber === 1) return stats.round1Score
+      return undefined
+    }
+
+    playerStatsArray.sort((a, b) => {
+      if (rankByAverage) {
+        return a.averageScore - b.averageScore
+      }
+
+      const aFinal = getFinalRoundScore(a) ?? Number.POSITIVE_INFINITY
+      const bFinal = getFinalRoundScore(b) ?? Number.POSITIVE_INFINITY
+      if (aFinal !== bFinal) {
+        return aFinal - bFinal
+      }
+      // Tiebreaker: better average
+      return a.averageScore - b.averageScore
+    })
 
     setPlayerStats(playerStatsArray)
 
-    // Prefer stored champion when present; otherwise best average
+    // Prefer stored champion when present; otherwise #1 by that year's ranking rules
     if (playerStatsArray.length > 0) {
       const storedChampion = trip.championPlayerId
         ? playerStatsArray.find(stat => stat.player.id === trip.championPlayerId)
