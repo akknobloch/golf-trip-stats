@@ -4328,6 +4328,52 @@ button,
   transition: all 0.3s ease;
 }
 
+.photo-gallery-viewport {
+  overflow: hidden;
+  padding: 4px;
+  margin: -4px -4px 1rem;
+  box-sizing: content-box;
+  transition: height 280ms ease-out;
+}
+
+.photo-gallery-viewport .photo-grid {
+  margin-bottom: 0;
+}
+
+.photo-gallery-toggle {
+  display: flex;
+  margin-inline: auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border: 1px solid #b5d8ca;
+  border-radius: 999px;
+  color: #17674f;
+  background: #f0f8f4;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms ease-out;
+}
+
+.photo-gallery-toggle:hover {
+  background: #deefe6;
+}
+
+.photo-gallery-toggle:focus-visible {
+  outline: 3px solid #059669;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-gallery-viewport,
+  .photo-gallery-toggle {
+    transition: none;
+  }
+}
+
 .photo-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -5314,5 +5360,3 @@ a.tab-btn {
 .score-grid-table th {
   background: #f3f4f6;
 }
-
-

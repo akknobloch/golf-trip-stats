@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { TripPhoto } from '@/lib/types'
 
@@ -14,12 +14,30 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
   const [selectedPhoto, setSelectedPhoto] = useState<TripPhoto | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [mounted, setMounted] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const [layout, setLayout] = useState({ columns: 1, rowHeight: 200, fullHeight: 200 })
+  const gridRef = useRef<HTMLDivElement>(null)
+  const gridId = useId()
   const overlayRef = useRef<HTMLDivElement>(null)
   const isOpen = selectedPhoto !== null
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    const grid = gridRef.current
+    if (!grid) return
+    const measure = () => {
+      const columns = getComputedStyle(grid).gridTemplateColumns.split(' ').length
+      const rowHeight = grid.firstElementChild?.getBoundingClientRect().height || 200
+      setLayout({ columns, rowHeight, fullHeight: grid.scrollHeight })
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(grid)
+    return () => observer.disconnect()
+  }, [photos])
 
   const openModal = (photo: TripPhoto, index: number) => {
     setSelectedPhoto(photo)
@@ -154,14 +172,20 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
     <div className={`photo-gallery ${className}`}>
       {title && <h3 className="gallery-title">{title}</h3>}
 
-      <div className="photo-grid">
+      <div
+        className="photo-gallery-viewport"
+        style={{ height: expanded ? layout.fullHeight : layout.rowHeight }}
+      >
+      <div className="photo-grid" id={gridId} ref={gridRef}>
         {photos.map((photo, index) => (
           <div
             key={photo.id}
             className="photo-item"
             onClick={() => openModal(photo, index)}
             role="button"
-            tabIndex={0}
+            tabIndex={!expanded && index >= layout.columns ? -1 : 0}
+            aria-hidden={!expanded && index >= layout.columns ? true : undefined}
+            style={{ visibility: !expanded && index >= layout.columns ? 'hidden' : undefined }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
@@ -173,6 +197,7 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
             <div className="photo-thumbnail">
               <img
                 src={photo.thumbnailUrl || photo.url}
+                style={{ objectPosition: photo.thumbnailPosition }}
                 alt={photo.caption || `Trip photo ${index + 1}`}
                 loading="lazy"
               />
@@ -183,6 +208,20 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
           </div>
         ))}
       </div>
+      </div>
+
+      {photos.length > layout.columns && (
+        <button
+          type="button"
+          className="photo-gallery-toggle"
+          aria-expanded={expanded}
+          aria-controls={gridId}
+          onClick={() => setExpanded(value => !value)}
+        >
+          {expanded ? 'Show less' : `Show all ${photos.length} photos`}
+          <i className={`fas fa-chevron-${expanded ? 'up' : 'down'}`} aria-hidden="true" />
+        </button>
+      )}
 
       {mounted && modal ? createPortal(modal, document.body) : null}
     </div>

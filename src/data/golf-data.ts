@@ -308,8 +308,8 @@ export const staticCourses: Course[] = [
     "location": "Galena, IL",
     "par": 72,
     "imageUrl": "https://www.eagleridge.com/images/jqg_1678308965.jpg",
-    "timesPlayed": 3,
-    "lastPlayed": 2024
+    "timesPlayed": 4,
+    "lastPlayed": 2026
   },
   {
     "id": "1755398281140",
@@ -317,8 +317,8 @@ export const staticCourses: Course[] = [
     "location": "Galena, IL",
     "par": 72,
     "imageUrl": "https://www.eagleridge.com/images/jqg_1618526855.jpg",
-    "timesPlayed": 4,
-    "lastPlayed": 2024
+    "timesPlayed": 5,
+    "lastPlayed": 2026
   },
   {
     "id": "1755398304927",
@@ -448,6 +448,15 @@ export const staticCourses: Course[] = [
     "timesPlayed": 1,
     "id": "1768845772118",
     "lastPlayed": 2025
+  },
+  {
+    "id": "course_coyote_creek_bartonville",
+    "name": "Coyote Creek",
+    "location": "Bartonville, IL",
+    "par": 72,
+    "firstPlayed": 2026,
+    "lastPlayed": 2026,
+    "timesPlayed": 1
   }
 ]
 
@@ -714,7 +723,7 @@ export const staticTrips: Trip[] = [
     "description": "",
     "weather": "",
     "notes": "",
-    "championPlayerId": "",
+    "championPlayerId": "1755398345513",
     "attendees": [
       "1755398345513",
       "1768846383521_g7vcoif",
@@ -727,14 +736,67 @@ export const staticTrips: Trip[] = [
       "175535565261523",
       "17554599416447p",
       "17554599416443p",
-      "175535565261512",
+      "175535565261518",
       "17553556526152",
       "175535565261519",
       "17553556526157",
       "1785456342356_6bpklcs"
     ],
-    "photos": [],
-    "id": "1785454873493_cmondqf"
+    "photos": [
+      {
+        "id": "2026_img_0829",
+        "url": "/photos/2026/img_0829.webp",
+        "thumbnailUrl": "/photos/2026/img_0829-thumb.webp",
+        "thumbnailPosition": "50% 38%"
+      },
+      {
+        "id": "2026_img_2708",
+        "url": "/photos/2026/img_2708.webp",
+        "thumbnailUrl": "/photos/2026/img_2708-thumb.webp"
+      },
+      {
+        "id": "2026_img_2709",
+        "url": "/photos/2026/img_2709.webp",
+        "thumbnailUrl": "/photos/2026/img_2709-thumb.webp"
+      },
+      {
+        "id": "2026_img_9792",
+        "url": "/photos/2026/img_9792.webp",
+        "thumbnailUrl": "/photos/2026/img_9792-thumb.webp"
+      },
+      {
+        "id": "2026_img_9793",
+        "url": "/photos/2026/img_9793.webp",
+        "thumbnailUrl": "/photos/2026/img_9793-thumb.webp"
+      },
+      {
+        "id": "2026_img_0836",
+        "url": "/photos/2026/img_0836.webp",
+        "thumbnailUrl": "/photos/2026/img_0836-thumb.webp"
+      },
+      {
+        "id": "2026_img_0827",
+        "url": "/photos/2026/img_0827.webp",
+        "thumbnailUrl": "/photos/2026/img_0827-thumb.webp"
+      },
+      {
+        "id": "2026_img_0823",
+        "url": "/photos/2026/img_0823.webp",
+        "thumbnailUrl": "/photos/2026/img_0823-thumb.webp"
+      },
+      {
+        "id": "2026_img_0821",
+        "url": "/photos/2026/img_0821.webp",
+        "thumbnailUrl": "/photos/2026/img_0821-thumb.webp"
+      },
+      {
+        "id": "2026_img_0820",
+        "url": "/photos/2026/img_0820.webp",
+        "thumbnailUrl": "/photos/2026/img_0820-thumb.webp"
+      }
+    ],
+    "id": "1785454873493_cmondqf",
+    "rankingMethod": "finalRound"
   }
 ]
 
@@ -3963,5 +4025,475 @@ export const staticRounds: Round[] = [
     "score": 125,
     "date": "2025-09-28",
     "year": 2025
+  },
+  {
+    "id": "2026_1755398345513_r1",
+    "playerId": "1755398345513",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 77,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_1755398345513_r2",
+    "playerId": "1755398345513",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 84,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_1755398345513_r3",
+    "playerId": "1755398345513",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 75,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_175535565261518_r1",
+    "playerId": "175535565261518",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 78,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_175535565261518_r2",
+    "playerId": "175535565261518",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 86,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_175535565261518_r3",
+    "playerId": "175535565261518",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 78,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_17553556526153_r1",
+    "playerId": "17553556526153",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 79,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_17553556526153_r2",
+    "playerId": "17553556526153",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 85,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_17553556526153_r3",
+    "playerId": "17553556526153",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 87,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_17553556526152_r1",
+    "playerId": "17553556526152",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 85,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_17553556526152_r2",
+    "playerId": "17553556526152",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 90,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_17553556526152_r3",
+    "playerId": "17553556526152",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 86,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_17553556526157_r1",
+    "playerId": "17553556526157",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 89,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_17553556526157_r2",
+    "playerId": "17553556526157",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 78,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_17553556526157_r3",
+    "playerId": "17553556526157",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 81,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_17554599416447p_r1",
+    "playerId": "17554599416447p",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 92,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_17554599416447p_r2",
+    "playerId": "17554599416447p",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 87,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_17554599416447p_r3",
+    "playerId": "17554599416447p",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 91,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_17553556526154_r1",
+    "playerId": "17553556526154",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 103,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_17553556526154_r2",
+    "playerId": "17553556526154",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 93,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_17553556526154_r3",
+    "playerId": "17553556526154",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 83,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_17554599416443p_r1",
+    "playerId": "17554599416443p",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 87,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_17554599416443p_r2",
+    "playerId": "17554599416443p",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 88,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_17554599416443p_r3",
+    "playerId": "17554599416443p",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 89,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_1768846383521_jrfpa11_r1",
+    "playerId": "1768846383521_jrfpa11",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 91,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_1768846383521_jrfpa11_r2",
+    "playerId": "1768846383521_jrfpa11",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 89,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_1768846383521_jrfpa11_r3",
+    "playerId": "1768846383521_jrfpa11",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 89,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_175535565261523_r1",
+    "playerId": "175535565261523",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 99,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_175535565261523_r2",
+    "playerId": "175535565261523",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 82,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_175535565261523_r3",
+    "playerId": "175535565261523",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 90,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_17553556526156_r1",
+    "playerId": "17553556526156",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 101,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_17553556526156_r2",
+    "playerId": "17553556526156",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 85,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_17553556526156_r3",
+    "playerId": "17553556526156",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 96,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_175535565261525_r1",
+    "playerId": "175535565261525",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 87,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_175535565261525_r2",
+    "playerId": "175535565261525",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 93,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_175535565261525_r3",
+    "playerId": "175535565261525",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 93,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_1768846383521_g7vcoif_r1",
+    "playerId": "1768846383521_g7vcoif",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 108,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_1768846383521_g7vcoif_r2",
+    "playerId": "1768846383521_g7vcoif",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 104,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_1768846383521_g7vcoif_r3",
+    "playerId": "1768846383521_g7vcoif",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 95,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_1768846383521_hhprfig_r1",
+    "playerId": "1768846383521_hhprfig",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 110,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_1768846383521_hhprfig_r2",
+    "playerId": "1768846383521_hhprfig",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 107,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_1768846383521_hhprfig_r3",
+    "playerId": "1768846383521_hhprfig",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 109,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_1785456342356_6bpklcs_r1",
+    "playerId": "1785456342356_6bpklcs",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 134,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_1785456342356_6bpklcs_r2",
+    "playerId": "1785456342356_6bpklcs",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 108,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
+  },
+  {
+    "id": "2026_1785456342356_6bpklcs_r3",
+    "playerId": "1785456342356_6bpklcs",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "course_coyote_creek_bartonville",
+    "score": 113,
+    "date": "2026-09-20",
+    "year": 2026,
+    "notes": "Round 3"
+  },
+  {
+    "id": "2026_175535565261519_r1",
+    "playerId": "175535565261519",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398281140",
+    "score": 90,
+    "date": "2026-09-18",
+    "year": 2026,
+    "notes": "Round 1"
+  },
+  {
+    "id": "2026_175535565261519_r2",
+    "playerId": "175535565261519",
+    "tripId": "1785454873493_cmondqf",
+    "courseId": "1755398253318",
+    "score": 83,
+    "date": "2026-09-19",
+    "year": 2026,
+    "notes": "Round 2"
   }
 ]

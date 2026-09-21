@@ -311,6 +311,11 @@ function parseCSVLine(line: string): string[] {
 // Date utility functions
 export function formatDate(dateString: string): string {
   try {
+    // Calendar dates have no timezone; keep their day when displaying locally.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split('-').map(Number)
+      return new Date(year, month - 1, day).toLocaleDateString()
+    }
     const date = new Date(dateString)
     if (isNaN(date.getTime())) {
       // If date is invalid, try to parse common formats

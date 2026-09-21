@@ -30,6 +30,7 @@ export interface Trip {
   weather?: string
   notes?: string
   championPlayerId?: string
+  rankingMethod?: 'average' | 'finalRound'
   attendees?: string[] // Array of player IDs who attended but don't have scores recorded
   photos?: TripPhoto[] // Array of photos for this trip
 }
@@ -40,6 +41,7 @@ export interface TripPhoto {
   caption?: string
   date?: string
   thumbnailUrl?: string
+  thumbnailPosition?: string
 }
 
 export interface Player {

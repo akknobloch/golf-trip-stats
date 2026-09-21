@@ -439,6 +439,7 @@ export default function Home() {
                                   <img 
                                     src={trip.photos[0].thumbnailUrl || trip.photos[0].url} 
                                     alt={`${trip.location} trip photo`}
+                                    style={{ objectPosition: trip.photos[0].thumbnailPosition }}
                                     loading="lazy"
                                   />
                                   <div className="photo-count">

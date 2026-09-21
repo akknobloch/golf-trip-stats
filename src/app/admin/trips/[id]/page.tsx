@@ -75,7 +75,7 @@ export default function AdminTripHubPage() {
     const result = await saveDataset({
       players: [...dataset.players, ...newPlayers],
       courses: dataset.courses,
-      trips: dataset.trips.map(item => (item.id === trip.id ? { ...tripData, id: trip.id } : item)),
+      trips: dataset.trips.map(item => (item.id === trip.id ? { ...item, ...tripData, id: trip.id } : item)),
       rounds: dataset.rounds
     })
     if (result.success) {

@@ -159,10 +159,11 @@ export default function TripDetails() {
     })
 
     // Add individual round scores and calculate averages
-    // Pre-2026: rank by best (lowest) score on the final round
-    // 2026+: rank by best (lowest) average across rounds
+    // Use the trip's ranking rule when specified, otherwise retain the legacy defaults.
     const tripYear = new Date(trip.startDate).getFullYear()
-    const rankByAverage = !Number.isNaN(tripYear) && tripYear >= 2026
+    const rankByAverage = trip.rankingMethod
+      ? trip.rankingMethod === 'average'
+      : !Number.isNaN(tripYear) && tripYear >= 2026
 
     const playerStatsArray = Array.from(playerStatsMap.values()).map(stats => {
       const sortedRounds = stats.rounds.sort((a, b) => getDateValue(a.round.date) - getDateValue(b.round.date))
