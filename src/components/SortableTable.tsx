@@ -28,6 +28,7 @@ type SortableTableProps<T> = {
   emptyMessage?: string
   getRowClassName?: (row: Row<T>) => string
   getCellClassName?: (cell: Cell<T, unknown>) => string
+  initialSorting?: SortingState
 }
 
 export default function SortableTable<T>({
@@ -40,9 +41,10 @@ export default function SortableTable<T>({
   cellClassName,
   emptyMessage = 'No data available.',
   getRowClassName,
-  getCellClassName
+  getCellClassName,
+  initialSorting = []
 }: SortableTableProps<T>) {
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [sorting, setSorting] = useState<SortingState>(initialSorting)
 
   const table = useReactTable({
     data,

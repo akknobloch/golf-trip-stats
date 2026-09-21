@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { TripPhoto } from '@/lib/types'
+import EllipsisTooltip from '@/components/EllipsisTooltip'
 
 interface PhotoGalleryProps {
   photos: TripPhoto[]
@@ -121,7 +122,9 @@ export default function PhotoGallery({ photos, title, className = '' }: PhotoGal
               {currentIndex + 1} of {photos.length}
             </span>
             {selectedPhoto.caption && (
-              <span className="photo-caption-modal">{selectedPhoto.caption}</span>
+              <EllipsisTooltip>
+                <span className="photo-caption-modal">{selectedPhoto.caption}</span>
+              </EllipsisTooltip>
             )}
           </div>
           <button

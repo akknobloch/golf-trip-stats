@@ -9,6 +9,7 @@ import TabbedContainer from '@/components/TabbedContainer'
 import ParallaxCard from '@/components/ParallaxCard'
 import PageShell from '@/components/PageShell'
 import EmptyState from '@/components/EmptyState'
+import EllipsisTooltip from '@/components/EllipsisTooltip'
 
 export default function Home() {
   const [players, setPlayers] = useState<Player[]>([])
@@ -347,7 +348,9 @@ export default function Home() {
                 <span className="stat-value">{stats.bestAverage}</span>
                 <p>Best Average</p>
                 {stats.bestAveragePlayer && (
-                  <small title={stats.bestAveragePlayer}>{stats.bestAveragePlayer}</small>
+                  <EllipsisTooltip>
+                    <small>{stats.bestAveragePlayer}</small>
+                  </EllipsisTooltip>
                 )}
               </div>
             </div>
@@ -360,9 +363,11 @@ export default function Home() {
                   <span className="stat-value">{stats.bestScore}</span>
                   <p>Best Single Score</p>
                   {stats.bestScorePlayer && (
-                    <small title={`${stats.bestScorePlayer} (${stats.bestScoreYear})`}>
-                      {stats.bestScorePlayer} ({stats.bestScoreYear})
-                    </small>
+                    <EllipsisTooltip>
+                      <small>
+                        {stats.bestScorePlayer} ({stats.bestScoreYear})
+                      </small>
+                    </EllipsisTooltip>
                   )}
                 </div>
               </div>
@@ -462,7 +467,9 @@ export default function Home() {
                             </div>
                             
                             <div className="trip-header">
-                            <h3 title={trip.location}>{trip.location}</h3>
+                            <EllipsisTooltip>
+                              <h3>{trip.location}</h3>
+                            </EllipsisTooltip>
                               <div className="trip-header-right">
                                 <span className="trip-year">{new Date(trip.startDate).getFullYear()}</span>
                                 <div className="trip-actions">
@@ -579,7 +586,9 @@ export default function Home() {
                       <Link key={course.id} href={`/courses/${course.id}`} className="course-card-link">
                         <ParallaxCard className="course-card" intensity={5} rotationIntensity={1.5}>
                           <div className="course-header">
-                            <h3 title={course.name}>{course.name}</h3>
+                            <EllipsisTooltip>
+                              <h3>{course.name}</h3>
+                            </EllipsisTooltip>
                             <div className="course-header-right">
                               <span className="course-par">Par {course.par}</span>
                               <div className="course-actions">

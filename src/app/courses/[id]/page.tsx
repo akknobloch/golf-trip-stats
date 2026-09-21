@@ -9,6 +9,7 @@ import Link from 'next/link'
 import PageShell from '@/components/PageShell'
 import EmptyState from '@/components/EmptyState'
 import LoadingState from '@/components/LoadingState'
+import EllipsisTooltip from '@/components/EllipsisTooltip'
 
 
 
@@ -59,11 +60,19 @@ export default function CourseDetails() {
         yearsPlayed: [...new Set(courseRounds.map(round => round.year))].sort((a, b) => b - a),
         totalRounds: courseRounds.length,
         uniquePlayers: [...new Set(courseRounds.map(round => round.playerId))].length,
-        roundsWithPlayers: courseRounds.map(round => ({
-          ...round,
-          playerName: players.find(p => p.id === round.playerId)?.name || 'Unknown Player',
-          tripName: trips.find(t => t.id === round.tripId)?.location || 'Unknown Trip'
-        }))
+        roundsWithPlayers: courseRounds
+          .map(round => ({
+            ...round,
+            playerName: players.find(p => p.id === round.playerId)?.name || 'Unknown Player',
+            tripName: trips.find(t => t.id === round.tripId)?.location || 'Unknown Trip'
+          }))
+          .sort((a, b) => {
+            const timeA = new Date(a.date).getTime()
+            const timeB = new Date(b.date).getTime()
+            const safeA = Number.isNaN(timeA) ? a.year || 0 : timeA
+            const safeB = Number.isNaN(timeB) ? b.year || 0 : timeB
+            return safeB - safeA
+          })
       }
       
       setCourseStats(enhancedStats)
@@ -112,7 +121,9 @@ export default function CourseDetails() {
               <div className="highlight-content">
                 <span className="stat-value">{courseStats.averageScore}</span>
                 <p>Average Score</p>
-                <small title="All players combined">All players combined</small>
+                <EllipsisTooltip>
+                  <small>All players combined</small>
+                </EllipsisTooltip>
               </div>
             </div>
 
@@ -124,13 +135,11 @@ export default function CourseDetails() {
                 <span className="stat-value">{courseStats.bestScore}</span>
                 <p>Best Score</p>
                 {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.bestScore) && (
-                  <small
-                    title={
-                      courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.bestScore)?.playerName
-                    }
-                  >
-                    {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.bestScore)?.playerName}
-                  </small>
+                  <EllipsisTooltip>
+                    <small>
+                      {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.bestScore)?.playerName}
+                    </small>
+                  </EllipsisTooltip>
                 )}
               </div>
             </div>
@@ -143,13 +152,11 @@ export default function CourseDetails() {
                 <span className="stat-value">{courseStats.worstScore}</span>
                 <p>Worst Score</p>
                 {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.worstScore) && (
-                  <small
-                    title={
-                      courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.worstScore)?.playerName
-                    }
-                  >
-                    {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.worstScore)?.playerName}
-                  </small>
+                  <EllipsisTooltip>
+                    <small>
+                      {courseStats.roundsWithPlayers.find((r: any) => r.score === courseStats.worstScore)?.playerName}
+                    </small>
+                  </EllipsisTooltip>
                 )}
               </div>
             </div>
@@ -164,6 +171,13 @@ export default function CourseDetails() {
             <h2 className="section-title">Trips Played</h2>
             <div className="trips-grid">
               {Array.from(new Set(courseStats.roundsWithPlayers.map((r: any) => r.tripId)))
+                .sort((a, b) => {
+                  const tripA = trips.find(t => t.id === a)
+                  const tripB = trips.find(t => t.id === b)
+                  const timeA = tripA?.startDate ? new Date(tripA.startDate).getTime() : 0
+                  const timeB = tripB?.startDate ? new Date(tripB.startDate).getTime() : 0
+                  return timeB - timeA
+                })
                 .map((tripId) => {
                   const tripIdStr = tripId as string
                   const trip = trips.find(t => t.id === tripIdStr)
@@ -174,9 +188,9 @@ export default function CourseDetails() {
                     <Link key={tripIdStr} href={`/trips/${tripIdStr}`} className="trip-card-link">
                       <div className="trip-card">
                         <div className="trip-header">
-                          <h3 title={trip?.location || 'Unknown Trip'}>
-                            {trip?.location || 'Unknown Trip'}
-                          </h3>
+                          <EllipsisTooltip>
+                            <h3>{trip?.location || 'Unknown Trip'}</h3>
+                          </EllipsisTooltip>
                           <div className="trip-header-right">
                             <span className="trip-year">{tripYear}</span>
                             <div className="trip-actions">

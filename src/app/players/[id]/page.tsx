@@ -10,6 +10,7 @@ import SortableTable from '@/components/SortableTable'
 import PageShell from '@/components/PageShell'
 import EmptyState from '@/components/EmptyState'
 import LoadingState from '@/components/LoadingState'
+import EllipsisTooltip from '@/components/EllipsisTooltip'
 import { type ColumnDef } from '@tanstack/react-table'
 
 
@@ -355,9 +356,11 @@ export default function PlayerDetails() {
                 <span className="stat-value">{bestScore ?? '—'}</span>
                 <p>Best Round</p>
                 {bestScoreRound && (
-                  <small title={`${bestScoreRound.course.name} (${bestScoreRound.round.year})`}>
-                    {bestScoreRound.course.name} ({bestScoreRound.round.year})
-                  </small>
+                  <EllipsisTooltip>
+                    <small>
+                      {bestScoreRound.course.name} ({bestScoreRound.round.year})
+                    </small>
+                  </EllipsisTooltip>
                 )}
               </div>
             </div>
@@ -417,6 +420,7 @@ export default function PlayerDetails() {
               rowClassName="round-row"
               headerCellClassName="round-col"
               cellClassName="round-col"
+              initialSorting={[{ id: 'dateValue', desc: true }]}
               getCellClassName={cell => (
                 cell.column.id === 'toPar' ? cell.row.original.toParClassName : ''
               )}
@@ -431,7 +435,9 @@ export default function PlayerDetails() {
             {courseStats.map((courseStat) => (
               <div key={courseStat.course.id} className="course-card">
                 <div className="course-header">
-                  <h3>{courseStat.course.name}</h3>
+                  <EllipsisTooltip>
+                    <h3>{courseStat.course.name}</h3>
+                  </EllipsisTooltip>
                   <span className="course-par">Par {courseStat.course.par}</span>
                 </div>
                 <div className="course-details">
