@@ -238,6 +238,9 @@ export default function PlayerDetails() {
   const scores = playerRounds.map(pr => pr.round.score)
   const bestScore = scores.length > 0 ? Math.min(...scores) : null
   const worstScore = scores.length > 0 ? Math.max(...scores) : null
+  const roundsAverage = scores.length > 0
+    ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
+    : null
   const bestScoreRound = bestScore != null
     ? playerRounds.find(pr => pr.round.score === bestScore)
     : undefined
@@ -423,15 +426,15 @@ export default function PlayerDetails() {
               </div>
               <div className="recent-rounds-stats">
                 <div className="recent-rounds-stat">
-                  <span className="stat-value">{Math.round(playerRounds.reduce((sum, pr) => sum + pr.round.score, 0) / playerRounds.length)}</span>
+                  <span className="stat-value">{roundsAverage ?? '—'}</span>
                   <span className="stat-label">Avg</span>
                 </div>
                 <div className="recent-rounds-stat">
-                  <span className="stat-value">{Math.min(...playerRounds.map(pr => pr.round.score))}</span>
+                  <span className="stat-value">{bestScore ?? '—'}</span>
                   <span className="stat-label">Best</span>
                 </div>
                 <div className="recent-rounds-stat">
-                  <span className="stat-value">{Math.max(...playerRounds.map(pr => pr.round.score))}</span>
+                  <span className="stat-value">{worstScore ?? '—'}</span>
                   <span className="stat-label">Worst</span>
                 </div>
               </div>
