@@ -366,10 +366,14 @@ export default function TripDetails() {
             {teamChampion && (
               <div className="team-champion-section">
                 <h2 className="section-title">
-                  <i className="fas fa-users" aria-hidden="true"></i> Team Champions
+                  <i className="fas fa-medal" aria-hidden="true"></i> Team Champions
                 </h2>
                 <div className="team-champion-card">
-                  <h3>{teamDisplayName(teamChampion, players)}</h3>
+                  {/* Only show a heading when the team was actually named — the
+                      fallback label is just the members, which the chips already list. */}
+                  {teamChampion.name && teamChampion.name.trim() && (
+                    <h3>{teamChampion.name.trim()}</h3>
+                  )}
                   <div className="team-champion-members">
                     {teamChampion.playerIds
                       .map(id => players.find(player => player.id === id))

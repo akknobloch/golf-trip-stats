@@ -443,3 +443,24 @@ export function getTeamChampion(trip: Trip): TripTeam | undefined {
 export function teamChampionshipCount(playerId: string, trips: Trip[]): number {
   return trips.filter(trip => getTeamChampion(trip)?.playerIds.includes(playerId)).length
 }
+
+/**
+ * Short label for a player: just the first name, unless another player on the
+ * roster shares it, in which case a last initial is added ("Austin E.").
+ * Keeps compact lists readable without making every name long.
+ */
+export function firstNameLabel(player: Player, allPlayers: Player[]): string {
+  const parts = player.name.trim().split(/\s+/)
+  const first = parts[0]
+  if (!first) return player.name
+
+  const shared = allPlayers.some(
+    other =>
+      other.id !== player.id &&
+      other.name.trim().split(/\s+/)[0].toLowerCase() === first.toLowerCase()
+  )
+  if (!shared) return first
+
+  const last = parts.length > 1 ? parts[parts.length - 1] : ''
+  return last ? `${first} ${last[0]}.` : first
+}

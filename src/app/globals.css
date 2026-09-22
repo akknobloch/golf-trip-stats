@@ -2689,6 +2689,11 @@ button,
     margin-top: 0.75rem;
 }
 
+/* Unnamed team: no heading above the chips, so drop the separating margin. */
+.team-champion-members:first-child {
+    margin-top: 0;
+}
+
 .team-champion-member {
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid #a9ccd3;
@@ -2719,6 +2724,11 @@ button,
 }
 
 .player-team-titles-badge i {
+    color: #2c7a8c;
+}
+
+.team-champion-card h3 .fa-medal,
+.team-champion-section .section-title .fa-medal {
     color: #2c7a8c;
 }
 
@@ -5508,4 +5518,18 @@ a.tab-btn {
   .ellipsis-tooltip {
     animation: none;
   }
+}
+
+/* Winning team members on a trip card: teal to match the team champion card,
+   and allowed to wrap since four names rarely fit one line. */
+.trip-details p.trip-team-champions {
+    display: flex;
+    align-items: flex-start;
+    line-height: 1.35;
+}
+
+.trip-details .fa-medal {
+    color: #2c7a8c;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
 }

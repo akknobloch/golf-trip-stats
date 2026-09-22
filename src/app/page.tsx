@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Player, Stats, Course, Trip, Round } from '@/lib/types'
-import { calculateStats, calculatePlayerStats, calculateCourseTimesPlayed, teamChampionshipCount } from '@/lib/utils'
+import { calculateStats, calculatePlayerStats, calculateCourseTimesPlayed, teamChampionshipCount, getTeamChampion, firstNameLabel } from '@/lib/utils'
 import { getData } from '../lib/data'
 import Link from 'next/link'
 import TabbedContainer from '@/components/TabbedContainer'
@@ -417,22 +417,8 @@ export default function Home() {
                 <div className="recent-trips-section">
                   <div className="trips-grid">
                     {sortedTrips.map(trip => {
-                      const tripRounds = rounds.filter(round => round.tripId === trip.id)
-                      const tripPlayersWithScores = new Set(tripRounds.map(round => round.playerId))
-                      const tripCourses = new Set(tripRounds.map(round => round.courseId))
                       const tripYear = new Date(trip.startDate).getFullYear()
                       const tripName = `${tripYear} ${trip.location}`
-                      
-                      // Include attendees who don't have scores
-                      const attendeesWithoutScores = trip.attendees 
-                        ? players.filter(player => 
-                            trip.attendees!.includes(player.id) && 
-                            !tripRounds.some(round => round.playerId === player.id)
-                          )
-                        : []
-                      
-                      // Total players = players with scores + attendees without scores
-                      const totalTripPlayers = tripPlayersWithScores.size + attendeesWithoutScores.length
                       
                       return (
                         <Link key={trip.id} href={`/trips/${trip.id}`} className="trip-card-link">
@@ -480,8 +466,21 @@ export default function Home() {
                               </div>
                             </div>
                             <div className="trip-details">
-                              <p><i className="fas fa-users"></i> {totalTripPlayers} players</p>
                               <p><i className="fas fa-trophy"></i> {trip.championPlayerId ? players.find(p => p.id === trip.championPlayerId)?.name || 'TBD' : 'TBD'}</p>
+                              {(() => {
+                                const teamChampion = getTeamChampion(trip)
+                                if (!teamChampion) return null
+                                const memberNames = teamChampion.playerIds
+                                  .map(memberId => players.find(p => p.id === memberId))
+                                  .filter((member): member is Player => member !== undefined)
+                                  .map(member => firstNameLabel(member, players))
+                                if (memberNames.length === 0) return null
+                                return (
+                                  <p className="trip-team-champions">
+                                    <i className="fas fa-medal"></i> {memberNames.join(', ')}
+                                  </p>
+                                )
+                              })()}
                             </div>
                           </ParallaxCard>
                         </Link>
@@ -531,7 +530,7 @@ export default function Home() {
                                 )}
                                 {teamTitleCount > 0 && (
                                   <div className="player-team-titles-badge" title={`${teamTitleCount} Team Championship${teamTitleCount > 1 ? 's' : ''}`}>
-                                    <i className="fas fa-users"></i> {teamTitleCount}
+                                    <i className="fas fa-medal"></i> {teamTitleCount}
                                   </div>
                                 )}
                                 <div className="action-btn" title="View Details">

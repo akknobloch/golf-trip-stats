@@ -672,6 +672,18 @@ export const staticTrips: Trip[] = [
   },
   {
     "id": "175535635864212",
+    "teams": [
+      {
+        "id": "team_2024_champions",
+        "playerIds": [
+          "1755398345513",
+          "17553556526154",
+          "17553556526156",
+          "175535565261512"
+        ]
+      }
+    ],
+    "teamChampionId": "team_2024_champions",
     "startDate": "2024-09-20",
     "endDate": "2024-09-22",
     "location": "Galena, IL",
@@ -714,6 +726,19 @@ export const staticTrips: Trip[] = [
         "date": "2026-01-19T19:21:18.651Z"
       }
     ],
+    "teams": [
+      {
+        "id": "team_2025_champions",
+        "playerIds": [
+          "1768846383521_hhprfig",
+          "17553556526151",
+          "17554599416443p",
+          "17553556526152",
+          "175535565261524"
+        ]
+      }
+    ],
+    "teamChampionId": "team_2025_champions",
     "id": "1768845836360"
   },
   {
