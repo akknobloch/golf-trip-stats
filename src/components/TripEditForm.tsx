@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Trip, Player, TripPhoto } from '@/lib/types'
+import { Trip, Player, TripPhoto, TripTeam } from '@/lib/types'
 import { createId } from '@/lib/admin-data'
+import { teamDisplayName } from '@/lib/utils'
 import PhotoUpload from './PhotoUpload'
 
 interface TripEditFormProps {
@@ -51,7 +52,9 @@ export default function TripEditForm({
     weather: '',
     notes: '',
     championPlayerId: '',
-    attendees: [] as string[]
+    attendees: [] as string[],
+    teams: [] as TripTeam[],
+    teamChampionId: ''
   })
   const [photos, setPhotos] = useState<TripPhoto[]>([])
   const [createdPlayerIds, setCreatedPlayerIds] = useState<string[]>([])
@@ -74,7 +77,9 @@ export default function TripEditForm({
         weather: trip.weather || '',
         notes: trip.notes || '',
         championPlayerId: trip.championPlayerId || '',
-        attendees: trip.attendees || []
+        attendees: trip.attendees || [],
+        teams: trip.teams || [],
+        teamChampionId: trip.teamChampionId || ''
       })
       setPhotos(trip.photos || [])
     } else {
@@ -103,7 +108,59 @@ export default function TripEditForm({
       return
     }
     const newPlayers = localPlayers.filter(player => createdPlayerIds.includes(player.id))
-    onSave({ ...formData, photos }, newPlayers)
+    const teams = formData.teams.filter(team => team.playerIds.length > 0)
+    onSave(
+      {
+        ...formData,
+        teams,
+        teamChampionId: teams.some(team => team.id === formData.teamChampionId)
+          ? formData.teamChampionId
+          : undefined,
+        photos
+      },
+      newPlayers
+    )
+  }
+
+  const addTeam = () => {
+    if (disabled) return
+    setFormData(prev => ({
+      ...prev,
+      teams: [...prev.teams, { id: createId(), name: '', playerIds: [] }]
+    }))
+  }
+
+  const removeTeam = (teamId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      teams: prev.teams.filter(team => team.id !== teamId),
+      teamChampionId: prev.teamChampionId === teamId ? '' : prev.teamChampionId
+    }))
+  }
+
+  const updateTeamName = (teamId: string, name: string) => {
+    setFormData(prev => ({
+      ...prev,
+      teams: prev.teams.map(team => (team.id === teamId ? { ...team, name } : team))
+    }))
+  }
+
+  // A player belongs to at most one team, so checking them into a team also
+  // removes them from whichever team they were on before.
+  const handleTeamMemberChange = (teamId: string, playerId: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      teams: prev.teams.map(team => {
+        if (team.id === teamId) {
+          return checked
+            ? { ...team, playerIds: [...team.playerIds, playerId] }
+            : { ...team, playerIds: team.playerIds.filter(id => id !== playerId) }
+        }
+        return checked && team.playerIds.includes(playerId)
+          ? { ...team, playerIds: team.playerIds.filter(id => id !== playerId) }
+          : team
+      })
+    }))
   }
 
   const handleAttendeeChange = (playerId: string, checked: boolean) => {
@@ -246,6 +303,95 @@ export default function TripEditForm({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="form-group">
+          <label>Teams (optional)</label>
+          <div className="teams-editor">
+            {formData.teams.length === 0 && (
+              <p className="form-help">No teams yet. Add one to start building this trip&apos;s teams.</p>
+            )}
+            {formData.teams.map((team, index) => (
+              <div key={team.id} className="team-editor-card">
+                <div className="team-editor-header">
+                  <input
+                    type="text"
+                    value={team.name || ''}
+                    disabled={disabled}
+                    onChange={e => updateTeamName(team.id, e.target.value)}
+                    placeholder={`Team ${index + 1} name (optional)`}
+                    aria-label={`Team ${index + 1} name`}
+                  />
+                  {!disabled && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => removeTeam(team.id)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <div className="attendees-list">
+                  {[...localPlayers]
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map(player => {
+                      const onAnotherTeam = formData.teams.some(
+                        other => other.id !== team.id && other.playerIds.includes(player.id)
+                      )
+                      return (
+                        <label
+                          key={player.id}
+                          className={`attendee-checkbox${onAnotherTeam ? ' is-taken' : ''}`}
+                          title={onAnotherTeam ? 'Already on another team' : undefined}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={team.playerIds.includes(player.id)}
+                            disabled={disabled}
+                            onChange={e =>
+                              handleTeamMemberChange(team.id, player.id, e.target.checked)
+                            }
+                          />
+                          <span>{player.name}</span>
+                        </label>
+                      )
+                    })}
+                </div>
+              </div>
+            ))}
+            {!disabled && (
+              <button type="button" className="btn btn-secondary" onClick={addTeam}>
+                <i className="fas fa-plus" aria-hidden="true"></i> Add team
+              </button>
+            )}
+          </div>
+          <small className="form-help">
+            Teams are specific to this trip. Checking a player into a team removes them from any
+            other team.
+          </small>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="teamChampionId">Team Champion</label>
+          <select
+            id="teamChampionId"
+            value={formData.teamChampionId}
+            disabled={disabled || formData.teams.length === 0}
+            onChange={e => setFormData(prev => ({ ...prev, teamChampionId: e.target.value }))}
+          >
+            <option value="">No team champion selected</option>
+            {formData.teams
+              .filter(team => team.playerIds.length > 0)
+              .map(team => (
+                <option key={team.id} value={team.id}>
+                  {teamDisplayName(team, localPlayers)}
+                </option>
+              ))}
+          </select>
+          {formData.teams.length === 0 && (
+            <small className="form-help">Add at least one team to pick a team champion.</small>
+          )}
         </div>
 
         <div className="form-group">

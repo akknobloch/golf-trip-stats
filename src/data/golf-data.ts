@@ -796,7 +796,20 @@ export const staticTrips: Trip[] = [
       }
     ],
     "id": "1785454873493_cmondqf",
-    "rankingMethod": "finalRound"
+    "rankingMethod": "finalRound",
+    "teams": [
+      {
+        "id": "team_2026_chunk_and_run",
+        "name": "Chunk & Run",
+        "playerIds": [
+          "17554599416447p",
+          "17554599416443p",
+          "1755398345513",
+          "175535565261525"
+        ]
+      }
+    ],
+    "teamChampionId": "team_2026_chunk_and_run"
   }
 ]
 

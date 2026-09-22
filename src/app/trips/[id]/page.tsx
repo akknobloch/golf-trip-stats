@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Player, Course, Trip, Round } from '@/lib/types'
-import { formatDate, getDateValue, calculateTripDuration } from '@/lib/utils'
+import { formatDate, getDateValue, calculateTripDuration, getTeamChampion, teamDisplayName } from '@/lib/utils'
 import { getData } from '../../../lib/data'
 import PhotoGallery from '@/components/PhotoGallery'
 import SortableTable from '@/components/SortableTable'
@@ -259,6 +259,7 @@ export default function TripDetails() {
     }
   })()
   const tripName = `${tripYear} ${trip.location}`
+  const teamChampion = getTeamChampion(trip)
   const uniqueCourses = Array.from(new Set(tripRounds.map(tr => tr.course.id)))
     .map(courseId => courses.find(c => c.id === courseId))
     .filter((course): course is Course => course !== undefined)
@@ -356,6 +357,32 @@ export default function TripDetails() {
                 <div className="champion-card">
                   <div className="champion-player">
                     <h3>{champion.player.name}</h3>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Team Champion - only rendered when teams were tracked for this trip */}
+            {teamChampion && (
+              <div className="team-champion-section">
+                <h2 className="section-title">
+                  <i className="fas fa-users" aria-hidden="true"></i> Team Champions
+                </h2>
+                <div className="team-champion-card">
+                  <h3>{teamDisplayName(teamChampion, players)}</h3>
+                  <div className="team-champion-members">
+                    {teamChampion.playerIds
+                      .map(id => players.find(player => player.id === id))
+                      .filter((player): player is Player => player !== undefined)
+                      .map(player => (
+                        <Link
+                          key={player.id}
+                          href={`/players/${player.id}`}
+                          className="team-champion-member"
+                        >
+                          {player.name}
+                        </Link>
+                      ))}
                   </div>
                 </div>
               </div>

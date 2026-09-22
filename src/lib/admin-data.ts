@@ -1,4 +1,4 @@
-import { Player, Course, Trip, Round } from '@/lib/types'
+import { Player, Course, Trip, Round, TripTeam } from '@/lib/types'
 
 export type GolfDataset = {
   players: Player[]
@@ -28,6 +28,48 @@ export function tripDisplayName(trip: Trip): string {
   return `${getTripYear(trip)} ${trip.location}`
 }
 
+/**
+ * Drop a player from every team, and clear teamChampionId if that leaves the
+ * champion team empty. Used when a player is deleted.
+ */
+export function removePlayerFromTeams(trip: Trip, playerId: string): Trip {
+  if (!trip.teams || trip.teams.length === 0) return trip
+
+  const teams = trip.teams.map(team =>
+    team.playerIds.includes(playerId)
+      ? { ...team, playerIds: team.playerIds.filter(id => id !== playerId) }
+      : team
+  )
+  const championStillValid = teams.some(
+    team => team.id === trip.teamChampionId && team.playerIds.length > 0
+  )
+
+  return {
+    ...trip,
+    teams,
+    teamChampionId: championStillValid ? trip.teamChampionId : undefined
+  }
+}
+
+/**
+ * Repoint a team membership from one player to another, de-duplicating in case
+ * both players were on the same team. Used when merging two players.
+ */
+export function replacePlayerInTeams(trip: Trip, fromId: string, toId: string): Trip {
+  if (!trip.teams || trip.teams.length === 0) return trip
+
+  const teams = trip.teams.map(team =>
+    team.playerIds.includes(fromId)
+      ? {
+          ...team,
+          playerIds: Array.from(new Set(team.playerIds.map(id => (id === fromId ? toId : id))))
+        }
+      : team
+  )
+
+  return { ...trip, teams }
+}
+
 export function normalizeTripPhotosForSave(trip: Trip): Trip {
   if (!trip.photos || trip.photos.length === 0) {
     return trip
@@ -44,10 +86,28 @@ export function normalizeTripPhotosForSave(trip: Trip): Trip {
   return { ...trip, photos }
 }
 
+/** Drop teams with no members so empty rows from the editor don't get saved. */
+export function normalizeTripTeamsForSave(trip: Trip): Trip {
+  if (!trip.teams) return trip
+
+  const teams = trip.teams.filter(team => team.playerIds.length > 0)
+  if (teams.length === 0) {
+    const { teams: _teams, teamChampionId: _champion, ...rest } = trip
+    return rest
+  }
+
+  const championStillValid = teams.some(team => team.id === trip.teamChampionId)
+  return {
+    ...trip,
+    teams,
+    teamChampionId: championStillValid ? trip.teamChampionId : undefined
+  }
+}
+
 export function sanitizeDataset(data: GolfDataset): GolfDataset {
   return {
     ...data,
-    trips: data.trips.map(normalizeTripPhotosForSave)
+    trips: data.trips.map(trip => normalizeTripTeamsForSave(normalizeTripPhotosForSave(trip)))
   }
 }
 

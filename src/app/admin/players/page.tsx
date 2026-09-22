@@ -5,7 +5,7 @@ import LoadingState from '@/components/LoadingState'
 import AdminShell from '@/components/admin/AdminShell'
 import PlayerEditForm from '@/components/PlayerEditForm'
 import { useAdminDataset } from '@/hooks/useAdminDataset'
-import { createId } from '@/lib/admin-data'
+import { createId, removePlayerFromTeams } from '@/lib/admin-data'
 import { calculatePlayerStats } from '@/lib/utils'
 import { Player } from '@/lib/types'
 
@@ -55,7 +55,7 @@ export default function AdminPlayersPage() {
       players: dataset.players.filter(player => player.id !== id),
       rounds: dataset.rounds.filter(round => round.playerId !== id),
       trips: dataset.trips.map(trip => ({
-        ...trip,
+        ...removePlayerFromTeams(trip, id),
         attendees: (trip.attendees || []).filter(attendeeId => attendeeId !== id),
         championPlayerId: trip.championPlayerId === id ? undefined : trip.championPlayerId
       }))

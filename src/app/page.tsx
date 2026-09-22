@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Player, Stats, Course, Trip, Round } from '@/lib/types'
-import { calculateStats, calculatePlayerStats, calculateCourseTimesPlayed } from '@/lib/utils'
+import { calculateStats, calculatePlayerStats, calculateCourseTimesPlayed, teamChampionshipCount } from '@/lib/utils'
 import { getData } from '../lib/data'
 import Link from 'next/link'
 import TabbedContainer from '@/components/TabbedContainer'
@@ -514,6 +514,7 @@ export default function Home() {
                       })
                       .map((player, index) => {
                         const championshipCount = trips.filter(trip => trip.championPlayerId === player.id).length
+                        const teamTitleCount = teamChampionshipCount(player.id, trips)
                         return (
                         <Link key={player.id} href={`/players/${player.id}`} className="player-card-link">
                           <ParallaxCard className="player-card" intensity={6} rotationIntensity={2}>
@@ -526,6 +527,11 @@ export default function Home() {
                                 {championshipCount > 0 && (
                                   <div className="player-championships-badge" title={`${championshipCount} Trip Championship${championshipCount > 1 ? 's' : ''}`}>
                                     <i className="fas fa-trophy"></i> {championshipCount}
+                                  </div>
+                                )}
+                                {teamTitleCount > 0 && (
+                                  <div className="player-team-titles-badge" title={`${teamTitleCount} Team Championship${teamTitleCount > 1 ? 's' : ''}`}>
+                                    <i className="fas fa-users"></i> {teamTitleCount}
                                   </div>
                                 )}
                                 <div className="action-btn" title="View Details">

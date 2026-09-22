@@ -13,6 +13,7 @@ import {
   tripRoundCount,
   tripStatusLabel
 } from '@/lib/admin-data'
+import { getTeamChampion, teamDisplayName } from '@/lib/utils'
 import { Player, Trip } from '@/lib/types'
 
 type HubTab = 'details' | 'roster' | 'scores'
@@ -169,6 +170,16 @@ export default function AdminTripHubPage() {
                     {trip.championPlayerId
                       ? dataset.players.find(player => player.id === trip.championPlayerId)?.name || 'Unknown'
                       : 'Not set'}
+                  </p>
+                  <p><strong>Teams:</strong> {trip.teams?.length || 0}</p>
+                  <p>
+                    <strong>Team Champion:</strong>{' '}
+                    {(() => {
+                      const teamChampion = getTeamChampion(trip)
+                      return teamChampion
+                        ? teamDisplayName(teamChampion, dataset.players)
+                        : 'Not set'
+                    })()}
                   </p>
                   <p><strong>Photos:</strong> {trip.photos?.length || 0}</p>
                 </div>

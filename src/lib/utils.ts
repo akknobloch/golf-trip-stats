@@ -1,4 +1,4 @@
-import { Player, Stats, YearStats, Round, Trip, Course, CourseStats } from './types'
+import { Player, Stats, YearStats, Round, Trip, Course, CourseStats, TripTeam } from './types'
 
 export function calculateStats(players: Player[], rounds: Round[]): Stats {
   if (players.length === 0) {
@@ -418,4 +418,28 @@ export function calculateCourseTimesPlayed(courseId: string, rounds: Round[]): n
   const courseRounds = rounds.filter(round => round.courseId === courseId)
   const uniqueTrips = new Set(courseRounds.map(round => round.tripId))
   return uniqueTrips.size
+}
+
+/**
+ * Display label for a team: its explicit name when set, otherwise the members'
+ * names joined together. Unknown ids are dropped so a deleted player can't
+ * leave an "Unknown" fragment in the label.
+ */
+export function teamDisplayName(team: TripTeam, players: Player[]): string {
+  if (team.name && team.name.trim()) return team.name.trim()
+  const names = team.playerIds
+    .map(id => players.find(player => player.id === id)?.name)
+    .filter((name): name is string => Boolean(name))
+  return names.length > 0 ? names.join(' & ') : 'Unnamed team'
+}
+
+/** The winning team for a trip, or undefined when none is recorded. */
+export function getTeamChampion(trip: Trip): TripTeam | undefined {
+  if (!trip.teamChampionId) return undefined
+  return trip.teams?.find(team => team.id === trip.teamChampionId)
+}
+
+/** How many trips this player won as part of the champion team. */
+export function teamChampionshipCount(playerId: string, trips: Trip[]): number {
+  return trips.filter(trip => getTeamChampion(trip)?.playerIds.includes(playerId)).length
 }

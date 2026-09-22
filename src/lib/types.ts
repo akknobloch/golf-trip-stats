@@ -33,6 +33,14 @@ export interface Trip {
   rankingMethod?: 'average' | 'finalRound'
   attendees?: string[] // Array of player IDs who attended but don't have scores recorded
   photos?: TripPhoto[] // Array of photos for this trip
+  teams?: TripTeam[] // Teams drawn for this trip
+  teamChampionId?: string // id of the winning TripTeam
+}
+
+export interface TripTeam {
+  id: string
+  name?: string // Optional; falls back to the members' names
+  playerIds: string[]
 }
 
 export interface TripPhoto {

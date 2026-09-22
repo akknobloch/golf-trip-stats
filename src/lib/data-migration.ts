@@ -1,4 +1,5 @@
 import { Player, Round, Trip } from './types'
+import { replacePlayerInTeams } from './admin-data'
 
 export interface PlayerMergeResult {
   success: boolean
@@ -76,6 +77,7 @@ export function mergePlayerRecords(
         ))
         next = { ...next, attendees }
       }
+      next = replacePlayerInTeams(next, secondaryPlayer.id, primaryPlayer.id)
       return next
     })
 

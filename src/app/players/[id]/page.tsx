@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Player, Course, Trip, Round } from '@/lib/types'
-import { calculatePlayerStats } from '@/lib/utils'
+import { Player, Course, Trip, Round, TripTeam } from '@/lib/types'
+import { calculatePlayerStats, getDateValue, getTeamChampion, teamDisplayName } from '@/lib/utils'
 import { getData } from '../../../lib/data'
 import SortableTable from '@/components/SortableTable'
 import PageShell from '@/components/PageShell'
@@ -242,6 +242,13 @@ export default function PlayerDetails() {
     ? playerRounds.find(pr => pr.round.score === bestScore)
     : undefined
   const championshipCount = trips.filter(trip => trip.championPlayerId === playerId).length
+  const teamTitleTrips = trips
+    .map(trip => ({ trip, team: getTeamChampion(trip) }))
+    .filter((entry): entry is { trip: Trip; team: TripTeam } =>
+      entry.team !== undefined && entry.team.playerIds.includes(playerId)
+    )
+    .sort((a, b) => getDateValue(b.trip.startDate) - getDateValue(a.trip.startDate))
+  const teamTitleCount = teamTitleTrips.length
   const roundsTableData: PlayerRoundTableRow[] = playerRounds.map(({ round, course, trip }) => {
     const toPar = round.score - course.par
     const toParDisplay = toPar > 0 ? `+${toPar}` : toPar.toString()
@@ -303,6 +310,23 @@ export default function PlayerDetails() {
             <div className="champion-card">
               <div className="champion-player">
                 <h3>{championshipCount}x Trip Winner</h3>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {teamTitleCount > 0 && (
+          <div className="team-champion-section">
+            <div className="team-champion-card">
+              <h3>
+                <i className="fas fa-users" aria-hidden="true"></i> {teamTitleCount}x Team Champion
+              </h3>
+              <div className="team-champion-members">
+                {teamTitleTrips.map(({ trip, team }) => (
+                  <Link key={trip.id} href={`/trips/${trip.id}`} className="team-champion-member">
+                    {new Date(trip.startDate).getFullYear()} &middot; {teamDisplayName(team, players)}
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
